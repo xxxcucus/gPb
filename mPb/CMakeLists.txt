@@ -1,5 +1,6 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.10)
 project (mPb)
+cmake_policy(SET CMP0020 NEW)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -12,6 +13,7 @@ set(MPB_SRCS
 	discinversemasks.cpp
 	main.cpp
 	pbdetector.cpp
+	#pbdetector_cuda.cpp
 )
 
 add_executable(mPb ${MPB_SRCS})
