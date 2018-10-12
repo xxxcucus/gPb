@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
      * test disc direct masks
      * *********************************/
 
-    DiscDirectMasks ddm(2);
+    DiscDirectMasks ddm(5);
 
     for (int i = 0; i < 8; ++i) {
         qDebug() << "Testing half disc " << i;
@@ -22,6 +22,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    //return 0;
+
     /*************************************
      * test disc inverse masks
      * ***********************************/
@@ -29,9 +31,14 @@ int main(int argc, char* argv[])
     qDebug() << "Testing inverse disc";
     DiscInverseMasks dim(5);
     std::vector<std::vector<int>>& points = dim.getHalfDiscInfluencePoints();
-//    for (auto p : points) {
-//        qDebug() << p[0] << "-" << p[1] << "-" << p[2];
-//    }
+    for (auto p : points) {
+        QString ps;
+        for (auto pp : p)
+            ps += " " + QString::number(pp);
+        qDebug() << ps;
+    }
+
+    //return 0;
 
     /******************************************
      * test gradient calculation
@@ -53,9 +60,11 @@ int main(int argc, char* argv[])
     std::vector<cv::Mat> imgLabComp;
     cv::split(imgLab, imgLabComp);
     cv::imwrite(lCompPath, imgLabComp[2]);
+    qDebug() << "Saving L component" << lCompPath.c_str();
 
     PbDetector pbd(3, imgLabComp[2]);
     pbd.calculateGradients();
+    qDebug() << "Calculate gradients";
     cv::imwrite(grad0Path, pbd.getGradientImage(0));
     cv::imwrite(grad1Path, pbd.getGradientImage(1));
     cv::imwrite(grad2Path, pbd.getGradientImage(2));

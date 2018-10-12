@@ -1,4 +1,5 @@
 #include "discinversemasks.h"
+#include <QDebug>
 
 DiscInverseMasks::DiscInverseMasks(int radius): m_Radius(radius) {
     computeHalfDiscInfluencePoints();
@@ -10,6 +11,7 @@ void DiscInverseMasks::computeHalfDiscInfluencePoints() {
     DiscDirectMasks ddm(m_Radius);
 
     for(int i = -m_Radius; i <= m_Radius; ++i) {
+        //qDebug() << "BlaBla " << i;
         for (int j = -m_Radius; j <= m_Radius; ++j) {  //position of the neighbouring points
             std::vector<int> retVal;
             retVal.push_back(i);
@@ -24,6 +26,8 @@ void DiscInverseMasks::computeHalfDiscInfluencePoints() {
             }
             if (retVal.size() > 2)
                 m_InfluencePoints.push_back(retVal);
+            else
+                qDebug() << i << " , " << j << " not found ";
         }
     }
 }

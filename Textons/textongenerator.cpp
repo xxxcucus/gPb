@@ -96,7 +96,7 @@ std::vector<cv::Mat> TextonGenerator::runFilterBankOnGrayscaleImage(const cv::Ma
 }
 
 void TextonGenerator::initClusterCenters() {
-    int imagesNo = m_SmallSetImagesPaths.size();
+    int imagesNo = static_cast<int>(m_SmallSetImagesPaths.size());
     for (int i = 0; i < m_ClusterNo; ++i) {
         int imgId = generateRandom(imagesNo);
         std::string imgPath = m_SmallSetImagesPaths[imgId];
@@ -117,7 +117,7 @@ void TextonGenerator::initClusterCenters() {
 }
 
 Texton TextonGenerator::getTexton(const std::vector<cv::Mat>& filtImgs, int x, int y) {
-    Texton t(filtImgs.size());
+    Texton t(static_cast<int>(filtImgs.size()));
     for (unsigned int i = 0; i < filtImgs.size(); ++i) {
         t.setValueAtIdx(filtImgs[i].at<uchar>(y, x), i);
     }
@@ -175,7 +175,7 @@ int TextonGenerator::getClosestClusterCenter(const Texton& t) {
 void TextonGenerator::runKMeansIteration() {
     std::vector<std::vector<std::pair<Texton, int>>> vKmeansData;
     int count = 0;
-    int total = m_SmallSetImagesPaths.size();
+    int total = static_cast<int>(m_SmallSetImagesPaths.size());
 
     for (std::string imagePath : m_SmallSetImagesPaths) {
         printf("%s : %d/%d \n", imagePath.c_str(), count, total);

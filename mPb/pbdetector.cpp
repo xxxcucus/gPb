@@ -21,11 +21,14 @@ void PbDetector::calculateGradients() {
     cv::copyMakeBorder(m_SingleChannelImage, bufImg, m_Scale, m_Scale, m_Scale, m_Scale, cv::BORDER_REPLICATE);
 
     qDebug() << "Compute gradients on " << bufImg.rows << " " << bufImg.cols << QTime::currentTime().toString("hh:mm:ss:zzz");
+    QTime duration;
+    duration.start();
 
     for (int i = 0; i < m_SingleChannelImage.rows + 2 * m_Scale; ++i) {
         //calculate histogram differences for line i - m_Radius * 2
         //qDebug() << "Compute step " << i << QTime::currentTime().toString("hh:mm:ss:zzz");
         for (int j = 0; j < m_SingleChannelImage.cols + 2 * m_Scale; ++j) {
+            //qDebug() << "BlaBla1 " << j;
             int val = bufImg.at<unsigned char>(i, j);
             //with the point (i,j) with value val, update all histograms which contain this data point
             addToHistoMaps(histograms, val, i, j);
@@ -36,7 +39,8 @@ void PbDetector::calculateGradients() {
         //to optimized the memory used only m_Scale + 1 rows are kept in memory
         deleteFromHistoMaps(histograms, i);
     }
-    qDebug() << "Compute gradients has finished " << QTime::currentTime().toString("hh:mm:ss:zzz");
+
+    qDebug() << "Compute gradients has finished in " << duration.elapsed() / 1000 << " seconds.";
 }
 
 void PbDetector::addToHistoMaps(HistoVect& vMaps, int val, int i, int j) {
@@ -51,13 +55,16 @@ void PbDetector::addToHistoMaps(HistoVect& vMaps, int val, int i, int j) {
             continue;
 
         //qDebug() << "Compute at " << i << " with " << (n[0] + i) << " size " << vMaps[n[0] + i].size();
-        if (int(vMaps[n[0] + i].size()) != m_SingleChannelImage.cols + 2 * m_Scale)
+        if (int(vMaps[n[0] + i].size()) != m_SingleChannelImage.cols + 2 * m_Scale) {
+            qDebug() << "exiting ..";
             exit(1);
+        }
 
         std::vector<Histo>& vHist = vMaps[n[0] + i][n[1] + j];
         for (unsigned int k = 2; k < n.size(); ++k) {
             if (n[k] > 2 * m_ArcNo)
                 continue;
+            //qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
             insertInHisto(vHist[n[k]], val);
         }
     }
@@ -129,7 +136,7 @@ void PbDetector::insertInHisto(Histo& histo, int val) {
 
 void PbDetector::initializeHistoRange(HistoVect& vMaps, int start, int stop) {
     std::vector<Histo> vHist;
-    for (int i = 0; i < m_ArcNo; ++i)
+    for (int i = 0; i < 2 * m_ArcNo; ++i)
         vHist.push_back(std::map<int, int>());
     for (int i = start; i < stop; ++i) {
         //qDebug() << "Initialized row " << i;
