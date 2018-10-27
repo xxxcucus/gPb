@@ -8,7 +8,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(Qt5Core REQUIRED)
-find_package(OpenCV 3.4.3 REQUIRED)
+find_package(OpenCV 3.4.3 REQUIRED COMPONENTS core imgproc highgui imgcodecs)
 
 if(OpenCV_FOUND)
    message("Found OpenCV")
@@ -17,7 +17,6 @@ if(OpenCV_FOUND)
 else(OpenCV_FOUND)
 	message("OpenCV not found" FATAL)
 endif(OpenCV_FOUND)
-
 
 add_subdirectory(mPb)
 add_subdirectory(Textons)
