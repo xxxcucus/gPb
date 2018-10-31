@@ -3,49 +3,14 @@
 CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_height, int scale) : 
 	m_Width(image_width), m_Height(image_height), m_Scale(scale)
 {
-	//copy image to the device memory and pad with zeros
-	//TODO: for start pad with zeros, but later as in the CPU method
-	//another solution is to pad the image before it is given to this class
-	m_LastCudaError = cudaMalloc(&m_dSourceImage, (image_width + 2 * m_Scale) * (image_height + 2 * m_Scale));
-
-	if (m_LastCudaError != cudaSuccess)
+	if (!copyImageToGPU()) 
 		return;
 
-	//set all pixels in the image to zero 
-	m_LastCudaError = cudaMemset(m_dSourceImage, 0, (image_width + 2 * m_Scale) * (image_height + 2 * m_Scale));
-
-	if (m_LastCudaError != cudaSuccess)
+	if (!createGradientImages()) 
 		return;
 
-	//copy from the host image with padding
-	int count = 0;
-	while (count < image_height && m_LastCudaError == cudaSuccess)
-	{
-		m_LastCudaError = cudaMemcpy(image_data + count * image_width, m_dSourceImage + m_Scale * (image_width + 2 * m_Scale) + count * (image_width + 2 * m_Scale) + m_Scale, image_width, cudaMemcpyHostToDevice);
-		count++;
-	}
-
-	if (m_LastCudaError != cudaSuccess)
-		return;	
-
-	//allocate the device memory for the gradient images
-	m_LastCudaError = cudaMalloc(&m_dGradientImages, m_ArcNo * image_width * image_height * sizeof(double));
-
-	if (m_LastCudaError != cudaSuccess) {
-		m_dGradientImages = nullptr;
+	if (!create2DHistoArray())
 		return;
-	}
-
-	//set all pixels in the gradient images to 0
-	m_LastCudaError = cudaMemset(m_dGradientImages, 0, m_ArcNo * image_width * image_height * sizeof(double));
-
-	if (m_LastCudaError != cudaSuccess)
-		return;
-
-	//preparing histograms
-	m_LastCudaError = cudaMalloc(&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned char*));
-	for (int i = 0; i < m_Height + 2 * m_Scale; ++i)
-		m_dHistograms[i] = nullptr;
 
 	m_FullyInitialized = true;
 }
@@ -68,7 +33,42 @@ bool CudaImage::initializeHistoRange(int start, int stop)
 	return true;
 }
 
-void CudaImage::addToHistoMaps(int val, int i, int j)
+bool CudaImage::createGradientImages() 
+{
+	//allocate the device memory for the gradient images
+	m_LastCudaError = cudaMalloc(&m_dGradientImages, m_ArcNo * image_width * image_height * sizeof(double));
+
+	if (m_LastCudaError != cudaSuccess) {
+		m_dGradientImages = nullptr;
+		return false;
+	}
+
+	//set all pixels in the gradient images to 0
+	m_LastCudaError = cudaMemset(m_dGradientImages, 0, m_ArcNo * image_width * image_height * sizeof(double));
+
+	if (m_LastCudaError != cudaSuccess)
+		return false;	
+
+	return true;
+}
+
+
+bool CudaImage::create2DHistoArray()
+{
+	//preparing histograms
+	m_LastCudaError = cudaMalloc(&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned char*));
+
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+	
+	for (int i = 0; i < m_Height + 2 * m_Scale; ++i)
+		m_dHistograms[i] = nullptr;
+
+	return true;
+}
+
+
+void CudaImage::addToHistoArray(int val, int i, int j)
 {
 	
 }
@@ -83,4 +83,34 @@ CudaImage::~CudaImage()
 			cudaFree(m_dHistograms[i]);
 
 	cudaFree(m_dHistograms);
+}
+
+void CudaImage::copyImageToGPU()
+{
+	//copy image to the device memory and pad with zeros
+	//TODO: for start pad with zeros, but later as in the CPU method
+	//another solution is to pad the image before it is given to this class
+	m_LastCudaError = cudaMalloc(&m_dSourceImage, (image_width + 2 * m_Scale) * (image_height + 2 * m_Scale));
+
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+
+	//set all pixels in the image to zero 
+	m_LastCudaError = cudaMemset(m_dSourceImage, 0, (image_width + 2 * m_Scale) * (image_height + 2 * m_Scale));
+
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+
+	//copy from the host image with padding
+	int count = 0;
+	while (count < image_height && m_LastCudaError == cudaSuccess)
+	{
+		m_LastCudaError = cudaMemcpy(image_data + count * image_width, m_dSourceImage + m_Scale * (image_width + 2 * m_Scale) + count * (image_width + 2 * m_Scale) + m_Scale, image_width, cudaMemcpyHostToDevice);
+		count++;
+	}
+
+	if (m_LastCudaError != cudaSuccess)
+		return false;	
+	
+	return true;
 }

@@ -9,25 +9,39 @@ public:
 	~CudaImage();
 
 	bool wasSuccessfullyCreated() {
-		return m_LastCudaError == cudaSuccess;
+		return m_FullyInitialized;
 	}
 
+private:
+	
     /**
-     * @brief initializeHistoRange - creates empty histograms on the GPU
+    * Allocates image on the GPU, pads it with zeros, and copies from host to gpu the image data. 
+    */
+	bool copyImageToGPU();
+    /**
+    * Creates 2D histogram array in the GPU.
+    */
+	bool create2DHistoArray();
+    /**
+    * Allocates memory for the gradient images.
+    */
+	bool createGradientImages();
+
+    /**
+     * Creates empty histograms on the GPU
      * for rows of image between start and stop.
      * @param start
      * @param stop
      */
     bool initializeHistoRange(int start, int stop);	
     /**
-     * @brief initializeInfluencePoints - copies m_Masks->getHalfDiscInfluencePoints()
+     * Copies m_Masks->getHalfDiscInfluencePoints()
      * to the GPU
      */
     bool initializeInfluencePoints();
 
 
-private:
-	void addToHistoMaps(int val, int i, int j);
+	void addToHistoArray(int val, int i, int j);
 
 private:
 	unsigned char* m_dSourceImage = nullptr; //image on the GPU
