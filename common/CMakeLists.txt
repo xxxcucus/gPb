@@ -7,9 +7,7 @@ include_directories(
 	${Qt5Core_INCLUDE_DIRS}
 	)
 
-set(COMMON_SRCS texton.cpp)
+set(COMMON_SRCS texton.cpp discdirectmasks.cpp discinversemasks.cpp)
 add_library(libCommon STATIC ${COMMON_SRCS})
-
-#target_link_libraries(PlanesWidget ${Qt5Widgets_LIBRARIES})
 
 qt5_use_modules(libCommon Core)

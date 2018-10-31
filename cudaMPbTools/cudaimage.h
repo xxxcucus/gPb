@@ -1,6 +1,8 @@
 #ifndef _CUDA_Image_
 #define _CUDA_Image_
 
+#include "discinversemasks.h"
+
 class CudaImage {
 public:
 	CudaImage(unsigned char* image_data, int image_width, int image_height, int scale);

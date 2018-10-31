@@ -9,11 +9,8 @@ include_directories(
 	${OpenCV_INCLUDE_DIRS})
 
 set(MPB_SRCS 	
-	discdirectmasks.cpp
-	discinversemasks.cpp
 	main.cpp
 	pbdetector.cpp
-	#pbdetector_cuda.cpp
 )
 
 add_executable(mPb ${MPB_SRCS})
