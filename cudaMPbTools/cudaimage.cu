@@ -68,6 +68,11 @@ bool CudaImage::initializeHistoRange(int start, int stop)
 	return true;
 }
 
+void CudaImage::addToHistoMaps(int val, int i, int j)
+{
+	
+}
+
 CudaImage::~CudaImage()
 {
 	cudaFree(m_dSourceImage);

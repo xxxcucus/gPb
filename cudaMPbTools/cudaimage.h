@@ -11,13 +11,21 @@ public:
 	}
 
     /**
-     * @brief initializeHistoRange - creates empty histograms for rows of image
-     * between start and stop.
+     * @brief initializeHistoRange - creates empty histograms on the GPU
+     * for rows of image between start and stop.
      * @param start
      * @param stop
      */
-	//TODO: to implement
     bool initializeHistoRange(int start, int stop);	
+    /**
+     * @brief initializeInfluencePoints - copies m_Masks->getHalfDiscInfluencePoints()
+     * to the GPU
+     */
+    bool initializeInfluencePoints();
+
+
+private:
+	void addToHistoMaps(int val, int i, int j);
 
 private:
 	unsigned char* m_dSourceImage = nullptr; //image on the GPU
@@ -32,6 +40,9 @@ private:
 
 	int m_ArcNo = 4;
 	bool m_FullyInitialized = false;
+
+	//the half disc masks around a center point
+    DiscInverseMasks* m_Masks = nullptr;
 };
 
 
