@@ -3,6 +3,9 @@
 
 #include "discinversemasks.h"
 
+//__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned char** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
+
+
 class CudaImage {
 public:
 	CudaImage(unsigned char* image_data, int image_width, int image_height, int scale);
@@ -17,7 +20,7 @@ private:
     /**
     * Allocates image on the GPU, pads it with zeros, and copies from host to gpu the image data. 
     */
-	bool copyImageToGPU();
+	bool copyImageToGPU(unsigned char* image_data);
     /**
     * Creates 2D histogram array in the GPU.
     */
@@ -40,13 +43,15 @@ private:
      */
     bool initializeInfluencePoints();
 
-
-	void addToHistoArray(int val, int i, int j);
+	__device__ void addToHistoArray(int val, int i, int j);
 
 private:
 	unsigned char* m_dSourceImage = nullptr; //image on the GPU
 	double* m_dGradientImages = nullptr; //the result images
 	unsigned char** m_dHistograms = nullptr;
+	struct CVector* m_dHalfDiscInfluencePoints = nullptr;
+	struct CVector* m_hHalfDiscInfluencePoints = nullptr;
+	int m_TotalHalfInfluencePoints = 0;
 
 	int m_Width = 0;
 	int m_Height = 0;
