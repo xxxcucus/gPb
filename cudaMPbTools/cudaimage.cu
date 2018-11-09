@@ -17,12 +17,13 @@ __device__ void CudaImage::addToHistoArray(int val, int i, int j)
 			exit(1);
 		}*/
 
-		unsigned char* vHist = m_dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * m_ArcNo * 256;
+		unsigned int* vHist = m_dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * m_ArcNo * 256;
 		for (unsigned int l = 2; l < n.m_Size; ++l) {
 			if (n.m_Data[l] > 2 * m_ArcNo)
 				continue;
 			//qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
-			(vHist + n.m_Data[l] * 256)[val]++;
+			//TODO: use atomic operation
+			atomicInc(vHist + n.m_Data[l] * 256 + val, m_Scale * m_Scale);
 		}
 	}
 }
@@ -46,13 +47,13 @@ CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_heigh
 bool CudaImage::initializeHistoRange(int start, int stop)
 { 
     for (int i = start; i < stop; ++i) {
-		m_LastCudaError = cudaMalloc(&m_dHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned char));
+		m_LastCudaError = cudaMalloc(&m_dHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
 		
 		if (m_LastCudaError != cudaSuccess)
 			return false;
 
 		//set all pixels in the gradient images to 0
-		m_LastCudaError = cudaMemset(m_dHistograms[i], 0, 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned char));
+		m_LastCudaError = cudaMemset(m_dHistograms[i], 0, 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
 
 		if (m_LastCudaError != cudaSuccess)
 			return false;
@@ -82,13 +83,13 @@ bool CudaImage::createGradientImages()
 bool CudaImage::create2DHistoArray()
 {
 	//preparing histograms
-	m_LastCudaError = cudaMalloc(&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned char*));
+	m_LastCudaError = cudaMalloc(&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
 
 	if (m_LastCudaError != cudaSuccess)
 		return false;
 	
 	//set all histograms to nullptr
-	m_LastCudaError = cudaMemset(m_dHistograms, 0, (m_Height + 2 * m_Scale) * sizeof(unsigned char*));
+	m_LastCudaError = cudaMemset(m_dHistograms, 0, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
 
 	if (m_LastCudaError != cudaSuccess)
 		return false;
@@ -185,4 +186,9 @@ bool CudaImage::initializeInfluencePoints() {
 	}
 
 	return true;	
+}
+
+
+void CudaImage::calculateHistograms() {
+
 }

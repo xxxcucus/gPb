@@ -5,7 +5,6 @@
 
 //__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned char** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
 
-
 class CudaImage {
 public:
 	CudaImage(unsigned char* image_data, int image_width, int image_height, int scale);
@@ -14,6 +13,8 @@ public:
 	bool wasSuccessfullyCreated() {
 		return m_FullyInitialized;
 	}
+
+	void calculateHistograms();
 
 private:
 	
@@ -48,7 +49,7 @@ private:
 private:
 	unsigned char* m_dSourceImage = nullptr; //image on the GPU
 	double* m_dGradientImages = nullptr; //the result images
-	unsigned char** m_dHistograms = nullptr;
+	unsigned int** m_dHistograms = nullptr;
 	struct CVector* m_dHalfDiscInfluencePoints = nullptr;
 	struct CVector* m_hHalfDiscInfluencePoints = nullptr;
 	int m_TotalHalfInfluencePoints = 0;
@@ -64,6 +65,7 @@ private:
 
 	//the half disc masks around a center point
     DiscInverseMasks* m_Masks = nullptr;
+
 };
 
 
