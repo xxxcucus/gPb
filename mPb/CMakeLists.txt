@@ -5,6 +5,7 @@ cmake_policy(SET CMP0020 NEW)
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../common
+	${CMAKE_CURRENT_SOURCE_DIR}/../cudaMPbTools
 	${Qt5Core_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS})
 
@@ -19,6 +20,7 @@ set(MPB_HEADR
 add_executable(mPb ${MPB_SRCS} ${MPB_HEADR})
 target_link_libraries(mPb
 	libCommon
-	${OpenCV_LIBS})
+	${OpenCV_LIBS}
+	cudaMPbTools)
 	
 qt5_use_modules(mPb Core)

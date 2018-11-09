@@ -23,7 +23,7 @@ __device__ void CudaImage::addToHistoArray(int val, int i, int j)
 				continue;
 			//qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
 			//TODO: use atomic operation
-			atomicInc(vHist + n.m_Data[l] * 256 + val, m_Scale * m_Scale);
+			atomicInc(vHist + n.m_Data[l] * 256 + val, 4 * m_Scale * m_Scale);
 		}
 	}
 }

@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QCoreApplication>
 #include "opencv2/opencv.hpp"
+#include "cudaimage.h"
 
 int main(int argc, char* argv[])
 {
@@ -39,6 +40,16 @@ int main(int argc, char* argv[])
     }
 
     //return 0;
+
+	/******************************************
+	* cudaMPb
+	********************************************/
+
+	std::string sourcePath1 = "D:/cucu/temp/gPb/mPb/Sternchen2016.jpg";
+	cv::Mat img1 = cv::imread(sourcePath1);
+	CudaImage cudaImg(img1.data, img1.cols, img1.rows, 10);
+
+	return 0;
 
     /******************************************
      * test gradient calculation

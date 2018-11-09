@@ -44,7 +44,8 @@ private:
      */
     bool initializeInfluencePoints();
 
-	__device__ void addToHistoArray(int val, int i, int j);
+	__device__
+	void addToHistoArray(int val, int i, int j);
 
 private:
 	unsigned char* m_dSourceImage = nullptr; //image on the GPU
