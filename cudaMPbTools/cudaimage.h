@@ -2,6 +2,8 @@
 #define _CUDA_Image_
 
 #include "discinversemasks.h"
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
 
