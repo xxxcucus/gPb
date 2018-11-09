@@ -9,6 +9,8 @@ include_directories(
 add_library(cudaMPbTools STATIC
   	cudaimage.cu
   	cudaimage.h
+	cvector.h
+	cvector.cpp
   )
 
  target_link_libraries(cudaMPbTools libCommon)

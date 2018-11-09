@@ -13,7 +13,10 @@ set(MPB_SRCS
 	pbdetector.cpp
 )
 
-add_executable(mPb ${MPB_SRCS})
+set(MPB_HEADR
+	pbdetector.h)
+
+add_executable(mPb ${MPB_SRCS} ${MPB_HEADR})
 target_link_libraries(mPb
 	libCommon
 	${OpenCV_LIBS})

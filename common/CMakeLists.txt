@@ -8,6 +8,7 @@ include_directories(
 	)
 
 set(COMMON_SRCS texton.cpp discdirectmasks.cpp discinversemasks.cpp)
-add_library(libCommon STATIC ${COMMON_SRCS})
+set(COMMON_HEADR texton.h discdirectmasks.h discinversemasks.h)
+add_library(libCommon STATIC ${COMMON_SRCS} ${COMMON_HEADR})
 
 qt5_use_modules(libCommon Core)

@@ -17,8 +17,15 @@ set(TEXTONS_SRCS
 	textonkernel.cpp
 )
 
+set(TEXTON_HEADR
+	gaussianfilter.h
+	gaussianfirstderivativefilter.h
+	gaussiansecondderivativefilter.h
+	textongenerator.h
+	textonkernel.h)
+
 add_executable(Textons 
-	${TEXTONS_SRCS})
+	${TEXTONS_SRCS} ${TEXTON_HEADR})
 target_link_libraries(Textons
 	libCommon
 	${OpenCV_LIBS})
