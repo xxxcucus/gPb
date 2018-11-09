@@ -2,13 +2,13 @@
 #include "cvector.h"
 #include <cstdlib>
 
-__device__ void CudaImage::addToHistoArray(int val, int i, int j)
+__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
-	for (int k = 0; k < m_TotalHalfInfluencePoints; ++k) {
-		struct CVector n = m_dHalfDiscInfluencePoints[k];
-		if ((n.m_Data[0] + i) < 0 || (n.m_Data[0] + i) >= m_Height + 2 * m_Scale)
+	for (int k = 0; k < totalHalfInfluencePoints; ++k) {
+		struct CVector n = dHalfDiscInfluencePoints[k];
+		if ((n.m_Data[0] + i) < 0 || (n.m_Data[0] + i) >= image_height + 2 * scale)
 			continue;
-		if ((n.m_Data[1] + j) < 0 || (n.m_Data[1] + j) >= m_Width + 2 * m_Scale)
+		if ((n.m_Data[1] + j) < 0 || (n.m_Data[1] + j) >= image_width + 2 * scale)
 			continue;
 
 		//qDebug() << "Compute at " << i << " with " << (n[0] + i) << " size " << vMaps[n[0] + i].size();
@@ -17,13 +17,13 @@ __device__ void CudaImage::addToHistoArray(int val, int i, int j)
 			exit(1);
 		}*/
 
-		unsigned int* vHist = m_dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * m_ArcNo * 256;
+		unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
 		for (unsigned int l = 2; l < n.m_Size; ++l) {
-			if (n.m_Data[l] > 2 * m_ArcNo)
+			if (n.m_Data[l] > 2 * arcno)
 				continue;
 			//qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
 			//TODO: use atomic operation
-			atomicInc(vHist + n.m_Data[l] * 256 + val, 4 * m_Scale * m_Scale);
+			atomicInc(vHist + n.m_Data[l] * 256 + val, 4 * scale * scale);
 		}
 	}
 }
