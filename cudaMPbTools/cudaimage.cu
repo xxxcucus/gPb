@@ -2,6 +2,21 @@
 #include "cvector.h"
 #include <cstdlib>
 
+__global__ void calcHisto(unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
+{
+	int index = threadIdx.x;
+	int stride = blockDim.x;
+
+	int i = 0;
+
+	for (int j = index; j < image_width + 2 * scale; j += stride) {
+		//qDebug() << "BlaBla1 " << j;
+		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];
+		//with the point (i,j) with value val, update all histograms which contain this data point
+		addToHistoArray(dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, image_width, image_height, scale, arcno, val, i, j);
+	}
+}
+
 
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
@@ -189,7 +204,7 @@ bool CudaImage::initializeInfluencePoints() {
 	return true;	
 }
 
-
 void CudaImage::calculateHistograms() {
-
+	calcHisto<<<1,256>>>(m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+	cudaDeviceSynchronize();
 }
