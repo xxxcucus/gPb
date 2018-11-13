@@ -92,35 +92,7 @@ CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_heigh
 	m_FullyInitialized = true;
 }
 
-bool CudaImage::initializeHistoRange(int start, int stop)
-{ 
-    for (int i = start; i < stop; ++i) {
-		m_LastCudaError = cudaMalloc((void**)&m_dHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
-		if (m_LastCudaError != cudaSuccess) {
-			return false;
-		}
 
-		//set all pixels in the gradient images to 0
-		m_LastCudaError = cudaMemset(m_dHistograms[i], 0, 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
-		if (m_LastCudaError != cudaSuccess)
-			return false;
-		}
-
-	return true;
-}
-
-void CudaImage::deleteFromHistoMaps(int index) {
-	//add a new row in the vMaps
-	if (index + m_Scale + 1 < m_Height + 2 * m_Scale) {
-		initializeHistoRange(index + m_Scale + 1, index + m_Scale + 2);
-		//qDebug() << "Initialize " << index + m_Scale + 1;
-	}
-	//delete row which was already analyzed from vMaps
-	if (index >= m_Scale + 1) {
-		//qDebug() << "Delete " << index - m_Scale;
-		cudaFree(m_dHistograms[index - m_Scale - 1]);
-	}
-}
 
 bool CudaImage::createGradientImages() 
 {
@@ -142,6 +114,42 @@ bool CudaImage::createGradientImages()
 	return true;
 }
 
+bool CudaImage::initializeHistoRange(int start, int stop)
+{
+	for (int i = start; i < stop; ++i) {
+		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
+		if (m_LastCudaError != cudaSuccess) {
+			return false;
+		}
+
+		//set all pixels in the gradient images to 0
+		//m_LastCudaError = cudaMemset(m_dHistograms[i], 0, 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
+		//if (m_LastCudaError != cudaSuccess)
+		//	return false;
+		//}
+
+		cudaMemcpy(m_dHistograms, m_hHistograms, stop * sizeof(unsigned int*), cudaMemcpyHostToDevice);
+		if (m_LastCudaError != cudaSuccess)
+			return false;
+	}
+
+	return true;
+}
+
+void CudaImage::deleteFromHistoMaps(int index) {
+	//add a new row in the vMaps
+	if (index + m_Scale + 1 < m_Height + 2 * m_Scale) {
+		initializeHistoRange(index + m_Scale + 1, index + m_Scale + 2);
+		//qDebug() << "Initialize " << index + m_Scale + 1;
+	}
+	//delete row which was already analyzed from vMaps
+	if (index >= m_Scale + 1) {
+		//qDebug() << "Delete " << index - m_Scale;
+		cudaFree(m_hHistograms[index - m_Scale - 1]);
+		m_hHistograms[index - m_Scale - 1] = nullptr;
+	}
+}
+
 bool CudaImage::create2DHistoArray()
 {
 	//preparing histograms
@@ -151,10 +159,12 @@ bool CudaImage::create2DHistoArray()
 		return false;
 	
 	//set all histograms to nullptr
-	m_LastCudaError = cudaMemset(m_dHistograms, 0, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
+	//m_LastCudaError = cudaMemset(m_dHistograms, 0, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
 
 	if (m_LastCudaError != cudaSuccess)
 		return false;
+
+	m_hHistograms = (unsigned int**)malloc((m_Height + 2 * m_Scale) * sizeof(unsigned int*));
 
 	return true;
 }
@@ -165,9 +175,12 @@ CudaImage::~CudaImage()
 	cudaFree(m_dSourceImage);
 	cudaFree(m_dGradientImages);
 	
-	for (int i = 0; i < m_Height + 2 * m_Scale; ++i)
-		cudaFree(m_dHistograms[i]);
+	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
+		if (m_hHistograms[i])
+			cudaFree(m_hHistograms[i]);
+	}
 
+	free(m_hHistograms);
 	cudaFree(m_dHistograms);
 
 	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {

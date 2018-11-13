@@ -75,6 +75,7 @@ private:
 	double* m_hGradientImages = nullptr;
 
 	unsigned int** m_dHistograms;
+	unsigned int** m_hHistograms;
 	struct CVector* m_dHalfDiscInfluencePoints;
 	struct CVector* m_hHalfDiscInfluencePoints = nullptr;
 	int m_TotalHalfInfluencePoints = 0;
