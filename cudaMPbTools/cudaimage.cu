@@ -2,12 +2,45 @@
 #include "cvector.h"
 #include <cstdlib>
 
-__global__ void calcHisto(unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
+__global__ void calculateGradients(int row, double* dGradientImages, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno) {
+	if (row < 2 * scale)
+		return;
+
+	int index = threadIdx.x;
+	int stride = blockDim.x;
+
+	for (int j = scale + index; j < image_width + scale; j += stride) {
+		unsigned int* vHist = dHistograms[row - scale] +  j * 2 * arcno * 256;
+
+		for (int i = 0; i < arcno; ++i) {
+			unsigned int* histo1 = vHist + i * 256;
+			unsigned int* histo2 = vHist + (i + arcno) * 256;
+			double grad = chisquare(histo1, histo2);
+
+			*(dGradientImages + i * image_width * image_height + (row - 2 * scale) * image_width + j - scale) = grad;
+		}
+	}
+}
+
+
+__device__ double chisquare(unsigned int* histo1, unsigned int* histo2)
+{
+	double retVal = 0.0;
+
+	for (int i = 0; i < 256; ++i) {
+		if (histo1[i] != 0 || histo2[i] != 0)
+			retVal += double(histo1[i] - histo2[i]) * double(histo1[i] - histo2[i]) / double(histo1[i] + histo2[i]);
+	}
+
+	return retVal;
+}
+
+__global__ void calcHisto(int row, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
 {
 	int index = threadIdx.x;
 	int stride = blockDim.x;
 
-	int i = 0;
+	int i = row;
 
 	for (int j = index; j < image_width + 2 * scale; j += stride) {
 		//qDebug() << "BlaBla1 " << j;
@@ -16,7 +49,6 @@ __global__ void calcHisto(unsigned char* dSourceImage, struct CVector* dHalfDisc
 		addToHistoArray(dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, image_width, image_height, scale, arcno, val, i, j);
 	}
 }
-
 
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
@@ -63,19 +95,31 @@ CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_heigh
 bool CudaImage::initializeHistoRange(int start, int stop)
 { 
     for (int i = start; i < stop; ++i) {
-		m_LastCudaError = cudaMalloc(&m_dHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
-		
-		if (m_LastCudaError != cudaSuccess)
+		m_LastCudaError = cudaMalloc((void**)&m_dHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
+		if (m_LastCudaError != cudaSuccess) {
 			return false;
+		}
 
 		//set all pixels in the gradient images to 0
 		m_LastCudaError = cudaMemset(m_dHistograms[i], 0, 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
-
 		if (m_LastCudaError != cudaSuccess)
 			return false;
 		}
 
 	return true;
+}
+
+void CudaImage::deleteFromHistoMaps(int index) {
+	//add a new row in the vMaps
+	if (index + m_Scale + 1 < m_Height + 2 * m_Scale) {
+		initializeHistoRange(index + m_Scale + 1, index + m_Scale + 2);
+		//qDebug() << "Initialize " << index + m_Scale + 1;
+	}
+	//delete row which was already analyzed from vMaps
+	if (index >= m_Scale + 1) {
+		//qDebug() << "Delete " << index - m_Scale;
+		cudaFree(m_dHistograms[index - m_Scale - 1]);
+	}
 }
 
 bool CudaImage::createGradientImages() 
@@ -93,13 +137,15 @@ bool CudaImage::createGradientImages()
 	if (m_LastCudaError != cudaSuccess)
 		return false;	
 
+	m_hGradientImages = (double*)malloc(m_ArcNo * m_Width * m_Height * sizeof(double));
+
 	return true;
 }
 
 bool CudaImage::create2DHistoArray()
 {
 	//preparing histograms
-	m_LastCudaError = cudaMalloc(&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
+	m_LastCudaError = cudaMalloc((void**)&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
 
 	if (m_LastCudaError != cudaSuccess)
 		return false;
@@ -112,7 +158,6 @@ bool CudaImage::create2DHistoArray()
 
 	return true;
 }
-
 
 //TODO: release of host memory
 CudaImage::~CudaImage()
@@ -132,7 +177,6 @@ CudaImage::~CudaImage()
 
 	free(m_hHalfDiscInfluencePoints);
 	cudaFree(m_dHalfDiscInfluencePoints);
-
 }
 
 bool CudaImage::copyImageToGPU(unsigned char* image_data)
@@ -156,11 +200,10 @@ bool CudaImage::copyImageToGPU(unsigned char* image_data)
 	while (count < m_Height && m_LastCudaError == cudaSuccess)
 	{
 		m_LastCudaError = cudaMemcpy(m_dSourceImage + m_Scale * (m_Width + 2 * m_Scale) + count * (m_Width + 2 * m_Scale) + m_Scale, image_data + count * m_Width, m_Width, cudaMemcpyHostToDevice);
+		if (m_LastCudaError != cudaSuccess)
+			return false;
 		count++;
 	}
-
-	if (m_LastCudaError != cudaSuccess)
-		return false;	
 	
 	return true;
 }
@@ -191,7 +234,6 @@ bool CudaImage::initializeInfluencePoints() {
 	if (m_LastCudaError != cudaSuccess)
 		return false;
 		
-	
 	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
 		m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints[i].m_Data, neighb[i].size() * sizeof(int));
 		if (m_LastCudaError != cudaSuccess)
@@ -204,7 +246,22 @@ bool CudaImage::initializeInfluencePoints() {
 	return true;	
 }
 
-void CudaImage::calculateHistograms() {
-	calcHisto<<<1,256>>>(m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
-	cudaDeviceSynchronize();
+void CudaImage::execute() {
+	printf("BlaBla 10\n");
+	initializeHistoRange(0, m_Scale + 1);
+	printf("BlaBla 11\n");
+
+	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
+		printf("%d - BlaBla 1\n", i);
+		calcHisto<<<1, 256>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		cudaDeviceSynchronize();
+		printf("%d - BlaBla 2\n", i);
+		calculateGradients<<<1, 256>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		cudaDeviceSynchronize();
+		printf("%d - BlaBla 3\n", i);
+		deleteFromHistoMaps(i);
+		printf("%d - BlaBla 4\n", i);
+	}
+
+	m_LastCudaError = cudaMemcpy(m_hGradientImages, m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double), cudaMemcpyDeviceToHost);
 }

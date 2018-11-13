@@ -27,3 +27,5 @@ target_link_libraries(mPb
 	cudaMPbTools)
 	
 qt5_use_modules(mPb Core)
+
+install(TARGETS mPb DESTINATION .)

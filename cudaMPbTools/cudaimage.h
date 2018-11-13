@@ -5,7 +5,10 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+__global__ void calculateGradients(int row, double* dGradientImages, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
+__global__ void calcHisto(int row, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
+__device__ double chisquare(unsigned int* histo1, unsigned int* histo2);
 
 class CudaImage {
 public:
@@ -16,7 +19,14 @@ public:
 		return m_FullyInitialized;
 	}
 
-	void calculateHistograms();
+	void execute();
+
+	/**
+	* returns the gradient image corresponding to the index arc
+	*/
+	double* getGradientImage(int index) {
+		return m_hGradientImages + index * m_Width * m_Height;
+	}
 
 private:
 	
@@ -33,6 +43,8 @@ private:
     */
 	bool createGradientImages();
 
+
+
     /**
      * Creates empty histograms on the GPU
      * for rows of image between start and stop.
@@ -40,20 +52,30 @@ private:
      * @param stop
      */
     bool initializeHistoRange(int start, int stop);	
+
+	/**
+	* Creates empty histograms on the GPU
+	* for new row and deletes histograms 
+	* which are not used anymore
+	* such that memory is used efficiently
+	* @param index
+	*/
+	void deleteFromHistoMaps(int index);
+
     /**
      * Copies m_Masks->getHalfDiscInfluencePoints()
      * to the GPU
      */
     bool initializeInfluencePoints();
 
-/*	__device__
-	void addToHistoArray(int val, int i, int j);*/
 
 private:
-	unsigned char* m_dSourceImage = nullptr; //image on the GPU
-	double* m_dGradientImages = nullptr; //the result images
-	unsigned int** m_dHistograms = nullptr;
-	struct CVector* m_dHalfDiscInfluencePoints = nullptr;
+	unsigned char* m_dSourceImage; //image on the GPU
+	double* m_dGradientImages; //the result images
+	double* m_hGradientImages = nullptr;
+
+	unsigned int** m_dHistograms;
+	struct CVector* m_dHalfDiscInfluencePoints;
 	struct CVector* m_hHalfDiscInfluencePoints = nullptr;
 	int m_TotalHalfInfluencePoints = 0;
 

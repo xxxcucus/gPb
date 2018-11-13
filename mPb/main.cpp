@@ -46,8 +46,20 @@ int main(int argc, char* argv[])
 	********************************************/
 
 	std::string sourcePath1 = "D:/cucu/temp/gPb/mPb/Sternchen2016.jpg";
+	std::string grad00Path = "D:/cucu/temp/gPb/mPb/grad0.png";
 	cv::Mat img1 = cv::imread(sourcePath1);
+	printf("BlaBla1\n");
 	CudaImage cudaImg(img1.data, img1.cols, img1.rows, 10);
+	if (!cudaImg.wasSuccessfullyCreated()) {
+		printf("Error in constructor. Exiting\n");
+		exit(1);
+	}
+	printf("BlaBla2\n");
+	cudaImg.execute();
+	printf("BlaBla3\n");
+	cv::Mat grad0(img1.rows, img1.cols, CV_64FC1, cudaImg.getGradientImage(0));
+	printf("BlaBla4\n");
+	cv::imwrite(grad00Path, grad0);
 
 	return 0;
 
