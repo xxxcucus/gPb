@@ -89,6 +89,9 @@ CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_heigh
 	if (!create2DHistoArray())
 		return;
 
+	if (!initializeInfluencePoints())
+		return;
+
 	m_FullyInitialized = true;
 }
 
@@ -184,8 +187,7 @@ CudaImage::~CudaImage()
 	cudaFree(m_dHistograms);
 
 	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
-		free(m_hHalfDiscInfluencePoints[i].m_Data);
-		cudaFree(m_dHalfDiscInfluencePoints[i].m_Data); 
+		cudaFree(m_hHalfDiscInfluencePoints[i].m_Data); 
 	}
 
 	free(m_hHalfDiscInfluencePoints);
@@ -231,49 +233,51 @@ bool CudaImage::initializeInfluencePoints() {
 
 	m_TotalHalfInfluencePoints = int(neighb.size());
 
-	m_hHalfDiscInfluencePoints = (CVector*)malloc(neighb.size() * sizeof(CVector));
+	m_hHalfDiscInfluencePoints = (CVector*)malloc(m_TotalHalfInfluencePoints * sizeof(CVector));
 	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
 		m_hHalfDiscInfluencePoints[i].m_Size = int(neighb[i].size());
-		m_hHalfDiscInfluencePoints[i].m_Data = (int*)malloc(neighb[i].size() * sizeof(int));
+		m_LastCudaError = cudaMalloc(&m_hHalfDiscInfluencePoints[i].m_Data, neighb[i].size() * sizeof(int));
+		if (m_LastCudaError != cudaSuccess)
+			return false;
+		int* values = (int*)malloc(neighb[i].size() * sizeof(int));
+		
 		for (int j = 0; j < neighb[i].size(); ++j)
-			m_hHalfDiscInfluencePoints[i].m_Data[j] = neighb[i][j];
+			values[j] = neighb[i][j];
+		m_LastCudaError = cudaMemcpy(m_hHalfDiscInfluencePoints[i].m_Data, values, neighb[i].size() * sizeof(int), cudaMemcpyHostToDevice);
+		if (m_LastCudaError != cudaSuccess)
+			return false;
+		free(values);
 	}
 
 //TODO: release memory in case of failure
 
 	//preparing histograms
-	m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints, neighb.size() * sizeof(CVector));
-
+	m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(CVector));
 	if (m_LastCudaError != cudaSuccess)
 		return false;
-		
-	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
-		m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints[i].m_Data, neighb[i].size() * sizeof(int));
-		if (m_LastCudaError != cudaSuccess)
-			return false;
-		m_LastCudaError = cudaMemcpy(m_dHalfDiscInfluencePoints[i].m_Data, m_hHalfDiscInfluencePoints[i].m_Data, neighb[i].size() * sizeof(int), cudaMemcpyHostToDevice);
-		if (m_LastCudaError != cudaSuccess)
-			return false;
-	}
+
+	cudaMemcpy(m_dHalfDiscInfluencePoints, m_hHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(CVector), cudaMemcpyHostToDevice);
+	if (m_LastCudaError != cudaSuccess)
+		return false;
 
 	return true;	
 }
 
 void CudaImage::execute() {
-	printf("BlaBla 10\n");
+	//printf("BlaBla 10\n");
 	initializeHistoRange(0, m_Scale + 1);
-	printf("BlaBla 11\n");
+	//printf("BlaBla 11\n");
 
 	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
-		printf("%d - BlaBla 1\n", i);
-		calcHisto<<<1, 256>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		//printf("%d - BlaBla 1\n", i);
+		calcHisto<<<1, 1024>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
-		printf("%d - BlaBla 2\n", i);
-		calculateGradients<<<1, 256>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		//printf("%d - BlaBla 2\n", i);
+		calculateGradients<<<1, 1024>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
-		printf("%d - BlaBla 3\n", i);
+		//printf("%d - BlaBla 3\n", i);
 		deleteFromHistoMaps(i);
-		printf("%d - BlaBla 4\n", i);
+		//printf("%d - BlaBla 4\n", i);
 	}
 
 	m_LastCudaError = cudaMemcpy(m_hGradientImages, m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double), cudaMemcpyDeviceToHost);
