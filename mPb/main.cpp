@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
      * test disc direct masks
      * *********************************/
 
-    DiscDirectMasks ddm(5);
+    /*DiscDirectMasks ddm(5);
 
     for (int i = 0; i < 8; ++i) {
         qDebug() << "Testing half disc " << i;
@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
         for (auto p : points) {
             qDebug() << p.x() << "-" << p.y();
         }
-    }
+    }*/
 
     //return 0;
 
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
      * test disc inverse masks
      * ***********************************/
 
-    qDebug() << "Testing inverse disc";
+    /*qDebug() << "Testing inverse disc";
     DiscInverseMasks dim(5);
     std::vector<std::vector<int>>& points = dim.getHalfDiscInfluencePoints();
     for (auto p : points) {
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
         for (auto pp : p)
             ps += " " + QString::number(pp);
         qDebug() << ps;
-    }
+    }*/
 
     //return 0;
 
