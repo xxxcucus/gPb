@@ -47,7 +47,10 @@ int main(int argc, char* argv[])
 
 	std::string sourcePath1 = "D:/ProjectsOpenCV/gPb/mPb/Sternchen2016.jpg";
 	std::string grad00Path = "D:/ProjectsOpenCV/gPb/mPb/grad0.png";
-	cv::Mat img1 = cv::imread(sourcePath1);
+	std::string grad01Path = "D:/ProjectsOpenCV/gPb/mPb/grad1.png";
+	std::string grad02Path = "D:/ProjectsOpenCV/gPb/mPb/grad2.png";
+	std::string grad03Path = "D:/ProjectsOpenCV/gPb/mPb/grad3.png";
+	cv::Mat img1 = cv::imread(sourcePath1, CV_LOAD_IMAGE_GRAYSCALE);
 	printf("BlaBla1\n");
 	CudaImage cudaImg(img1.data, img1.cols, img1.rows, 10);
 	if (!cudaImg.wasSuccessfullyCreated()) {
@@ -58,8 +61,14 @@ int main(int argc, char* argv[])
 	cudaImg.execute();
 	printf("BlaBla3\n");
 	cv::Mat grad0(img1.rows, img1.cols, CV_64FC1, cudaImg.getGradientImage(0));
-	printf("BlaBla4\n");
 	cv::imwrite(grad00Path, grad0);
+	cv::Mat grad1(img1.rows, img1.cols, CV_64FC1, cudaImg.getGradientImage(1));
+	cv::imwrite(grad01Path, grad1);
+	cv::Mat grad2(img1.rows, img1.cols, CV_64FC1, cudaImg.getGradientImage(2));
+	cv::imwrite(grad02Path, grad2);
+	cv::Mat grad3(img1.rows, img1.cols, CV_64FC1, cudaImg.getGradientImage(3));
+	cv::imwrite(grad03Path, grad3);
+	printf("BlaBla4\n");
 
 	return 0;
 

@@ -15,28 +15,22 @@ __global__ void calculateGradients(int row, double* dGradientImages, unsigned in
 		for (int i = 0; i < arcno; ++i) {
 			unsigned int* histo1 = vHist + i * 256;
 			unsigned int* histo2 = vHist + (i + arcno) * 256;
-			printf("Chi square for:\n");
+			//printf("Chi square for:\n");
+			double val = 0.0;
 			for (int k = 0; k < 256; ++k) {
-				if (histo1[k] != 0 || histo2[k] != 0)
-					printf("[%d - %d]", histo1[k], histo2[k]);
+				if (histo1[k] != 0 || histo2[k] != 0) {
+					double diff = double(int(histo1[k] - histo2[k]));
+					double sum = double(histo1[k] + histo2[k]);
+					val = val + diff * diff / sum;
+					//printf("[%d - %d = %f]", histo1[k], histo2[k], val);
+				}
+
 			}
-			double grad = chisquare(histo1, histo2);
-			printf("Grad[%d, %d, %d]=%f\n", row, j, i, grad);
-			*(dGradientImages + i * image_width * image_height + (row - 2 * scale) * image_width + j - scale) = grad;
+			double grad = val;
+			//printf("Grad[%d, %d, %d]=%f\n", row, j, i, grad);
+			*(dGradientImages + i * image_width * image_height + (row - 2 * scale) * image_width + (j - scale)) = grad;
 		}
 	}
-}
-
-__device__ double chisquare(unsigned int* histo1, unsigned int* histo2)
-{
-	double retVal = 0.0;
-
-	for (int i = 0; i < 256; ++i) {
-		if (histo1[i] != 0 || histo2[i] != 0)
-			retVal += (double(histo1[i] - histo2[i]) * double(histo1[i] - histo2[i]) / double(histo1[i] + histo2[i]));
-	}
-
-	return retVal;
 }
 
 __global__ void calcHisto(int row, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
@@ -300,12 +294,12 @@ void CudaImage::execute() {
 	initializeHistoRange(0, m_Scale + 1);
 	//printf("BlaBla 11\n");
 
-	for (int i = 0; i < 22/*m_Height + 2 * m_Scale*/; ++i) {
+	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
 		//printf("%d - BlaBla 1\n", i);
-		calcHisto<<<1, 1>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calcHisto<<<1, 1024>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		//printf("%d - BlaBla 2\n", i);
-		calculateGradients<<<1, 1>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calculateGradients<<<1, 1024>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		//printf("%d - BlaBla 3\n", i);
 		deleteFromHistoMaps(i);
