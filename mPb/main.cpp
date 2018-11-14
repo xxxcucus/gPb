@@ -45,13 +45,13 @@ int main(int argc, char* argv[])
 	* cudaMPb
 	********************************************/
 
-	std::string sourcePath1 = "D:/cucu/temp/gPb/mPb/Sternchen2016.jpg";
-	std::string grad00Path = "D:/cucu/temp/gPb/mPb/grad0.png";
+	std::string sourcePath1 = "D:/ProjectsOpenCV/gPb/mPb/Sternchen2016.jpg";
+	std::string grad00Path = "D:/ProjectsOpenCV/gPb/mPb/grad0.png";
 	cv::Mat img1 = cv::imread(sourcePath1);
 	printf("BlaBla1\n");
 	CudaImage cudaImg(img1.data, img1.cols, img1.rows, 10);
 	if (!cudaImg.wasSuccessfullyCreated()) {
-		printf("Error in constructor. Exiting\n");
+		printf("Error in constructor %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
 	}
 	printf("BlaBla2\n");

@@ -19,6 +19,10 @@ public:
 		return m_FullyInitialized;
 	}
 
+	const char* getErrorString() {
+		return cudaGetErrorString(m_LastCudaError);
+	}
+
 	void execute();
 
 	/**

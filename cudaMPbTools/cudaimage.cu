@@ -22,7 +22,6 @@ __global__ void calculateGradients(int row, double* dGradientImages, unsigned in
 	}
 }
 
-
 __device__ double chisquare(unsigned int* histo1, unsigned int* histo2)
 {
 	double retVal = 0.0;
@@ -76,26 +75,31 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 	}
 }
 
-
-CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_height, int scale) : 
+CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_height, int scale) :
 	m_Width(image_width), m_Height(image_height), m_Scale(scale)
 {
-	if (!copyImageToGPU(image_data)) 
+	if (!createGradientImages()) {
+		printf("Error in constructor createGradientImages\n");
 		return;
+	}
 
-	if (!createGradientImages()) 
+	if (!copyImageToGPU(image_data)) {
+		printf("Error in constructor copyImageToGPU\n");
 		return;
+	}
 
-	if (!create2DHistoArray())
+	if (!create2DHistoArray()) {
+		printf("Error in constructor create2DHistoArray\n");
 		return;
+	}
 
-	if (!initializeInfluencePoints())
+	if (!initializeInfluencePoints()) {
+		printf("Error in constructor initializeInfluencePoints\n");
 		return;
+	}
 
 	m_FullyInitialized = true;
 }
-
-
 
 bool CudaImage::createGradientImages() 
 {
@@ -199,24 +203,30 @@ bool CudaImage::copyImageToGPU(unsigned char* image_data)
 	//copy image to the device memory and pad with zeros
 	//TODO: for start pad with zeros, but later as in the CPU method
 	//another solution is to pad the image before it is given to this class
-	m_LastCudaError = cudaMalloc(&m_dSourceImage, (m_Width + 2 * m_Scale) * (m_Height + 2 * m_Scale));
+	m_LastCudaError = cudaMalloc((void**)&m_dSourceImage, (m_Width + 2 * m_Scale) * (m_Height + 2 * m_Scale));
 
-	if (m_LastCudaError != cudaSuccess)
-		return false;
+	if (m_LastCudaError != cudaSuccess) {
+		printf("Error copyImageToGPU cudaMalloc %s, %d %d %d\n", cudaGetErrorString(m_LastCudaError), m_Width, m_Height, m_Scale);
+		//return false;
+	}
 
 	//set all pixels in the image to zero 
 	m_LastCudaError = cudaMemset(m_dSourceImage, 0, (m_Width + 2 * m_Scale) * (m_Height + 2 * m_Scale));
 
-	if (m_LastCudaError != cudaSuccess)
+	if (m_LastCudaError != cudaSuccess) {
+		printf("Error copyImageToGPU cudaMemset\n");
 		return false;
+	}
 
 	//copy from the host image with padding
 	int count = 0;
 	while (count < m_Height && m_LastCudaError == cudaSuccess)
 	{
 		m_LastCudaError = cudaMemcpy(m_dSourceImage + m_Scale * (m_Width + 2 * m_Scale) + count * (m_Width + 2 * m_Scale) + m_Scale, image_data + count * m_Width, m_Width, cudaMemcpyHostToDevice);
-		if (m_LastCudaError != cudaSuccess)
+		if (m_LastCudaError != cudaSuccess) {
+			printf("Error copyImageToGPU cudaMemcpy %d\n", count);
 			return false;
+		}
 		count++;
 	}
 	
