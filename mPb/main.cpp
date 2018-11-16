@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 	std::string grad03Path = "D:/ProjectsOpenCV/gPb/mPb/grad3.png";
 	cv::Mat img1 = cv::imread(sourcePath1, CV_LOAD_IMAGE_GRAYSCALE);
 	printf("BlaBla1\n");
-	CudaImage cudaImg(img1.data, img1.cols, img1.rows, 10);
+	CudaMPb cudaImg(img1.data, img1.cols, img1.rows, 10);
 	if (!cudaImg.wasSuccessfullyCreated()) {
 		printf("Error in constructor %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	return 0;
 
     /******************************************
-     * test gradient calculation
+     * test gradient calculation with CPU
      * ****************************************/
 
     std::string sourcePath = "D:/ProjectsOpenCV/gPb/mPb/Sternchen2016.jpg";

@@ -10,10 +10,10 @@ __global__ void calcHisto(int row, unsigned char* dSourceImage, struct CVector* 
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
 
 
-class CudaImage {
+class CudaMPb {
 public:
-	CudaImage(unsigned char* image_data, int image_width, int image_height, int scale);
-	~CudaImage();
+	CudaMPb(unsigned char* image_data, int image_width, int image_height, int scale);
+	~CudaMPb();
 
 	bool wasSuccessfullyCreated() {
 		return m_FullyInitialized;

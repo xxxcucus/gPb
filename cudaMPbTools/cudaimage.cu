@@ -75,7 +75,7 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 	}
 }
 
-CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_height, int scale) :
+CudaMPb::CudaMPb(unsigned char* image_data, int image_width, int image_height, int scale) :
 	m_Width(image_width), m_Height(image_height), m_Scale(scale)
 {
 	if (!createGradientImages()) {
@@ -101,7 +101,7 @@ CudaImage::CudaImage(unsigned char* image_data, int image_width, int image_heigh
 	m_FullyInitialized = true;
 }
 
-bool CudaImage::createGradientImages() 
+bool CudaMPb::createGradientImages() 
 {
 	//allocate the device memory for the gradient images
 	m_LastCudaError = cudaMalloc(&m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double));
@@ -121,7 +121,7 @@ bool CudaImage::createGradientImages()
 	return true;
 }
 
-bool CudaImage::initializeHistoRange(int start, int stop)
+bool CudaMPb::initializeHistoRange(int start, int stop)
 {
 	for (int i = start; i < stop; ++i) {
 		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
@@ -137,7 +137,7 @@ bool CudaImage::initializeHistoRange(int start, int stop)
 	return true;
 }
 
-void CudaImage::deleteFromHistoMaps(int index) {
+void CudaMPb::deleteFromHistoMaps(int index) {
 
 	if (index + m_Scale + 1 < m_Height + 2 * m_Scale) {
 		initializeHistoRange(index + m_Scale + 1, index + m_Scale + 2);
@@ -149,7 +149,7 @@ void CudaImage::deleteFromHistoMaps(int index) {
 	}
 }
 
-bool CudaImage::create2DHistoArray()
+bool CudaMPb::create2DHistoArray()
 {
 	//preparing histograms
 	m_LastCudaError = cudaMalloc((void**)&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
@@ -163,7 +163,7 @@ bool CudaImage::create2DHistoArray()
 }
 
 //TODO: release of host memory
-CudaImage::~CudaImage()
+CudaMPb::~CudaMPb()
 {
 	cudaFree(m_dSourceImage);
 	cudaFree(m_dGradientImages);
@@ -184,7 +184,7 @@ CudaImage::~CudaImage()
 	cudaFree(m_dHalfDiscInfluencePoints);
 }
 
-bool CudaImage::copyImageToGPU(unsigned char* image_data)
+bool CudaMPb::copyImageToGPU(unsigned char* image_data)
 {
 	//copy image to the device memory and pad with zeros
 	//TODO: for start pad with zeros, but later as in the CPU method
@@ -223,7 +223,7 @@ bool CudaImage::copyImageToGPU(unsigned char* image_data)
  * Copies m_Masks->getHalfDiscInfluencePoints()
  * to the GPU
  */
-bool CudaImage::initializeInfluencePoints() {
+bool CudaMPb::initializeInfluencePoints() {
 	m_Masks = new DiscInverseMasks(m_Scale);
 	std::vector<std::vector<int>> neighb = m_Masks->getHalfDiscInfluencePoints();
 
@@ -275,7 +275,7 @@ bool CudaImage::initializeInfluencePoints() {
 	return true;	
 }
 
-void CudaImage::execute() {
+void CudaMPb::execute() {
 	//printf("BlaBla 10\n");
 	initializeHistoRange(0, m_Scale + 1);
 	//printf("BlaBla 11\n");
