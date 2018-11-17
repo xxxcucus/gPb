@@ -1,4 +1,4 @@
-#include "cudaimage.h"
+#include "cudampb.h"
 #include "cvector.h"
 #include <cstdlib>
 
@@ -282,10 +282,10 @@ void CudaMPb::execute() {
 
 	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
 		//printf("%d - BlaBla 1\n", i);
-		calcHisto<<<1, 2048>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calcHisto<<<1, 1024>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		//printf("%d - BlaBla 2\n", i);
-		calculateGradients<<<1, 2048>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calculateGradients<<<1, 1024>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		//printf("%d - BlaBla 3\n", i);
 		deleteFromHistoMaps(i);

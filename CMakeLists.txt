@@ -21,7 +21,7 @@ endif(OpenCV_FOUND)
 add_subdirectory(mPb)
 add_subdirectory(Textons)
 add_subdirectory(common)
-add_subdirectory(cudaMPbTools)
+add_subdirectory(cudaMPb)
 
 
 

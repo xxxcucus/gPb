@@ -4,7 +4,7 @@
 #include <QDebug>
 #include <QCoreApplication>
 #include "opencv2/opencv.hpp"
-#include "cudaimage.h"
+#include "cudampb.h"
 
 int main(int argc, char* argv[])
 {

@@ -8,7 +8,7 @@ include_directories(
      
 find_package(CUDA)
 
-cuda_add_library(cudaMPbTools 
+cuda_add_library(cudaMPb
   	cudampb.cu
   	cudampb.h
 	cvector.h

@@ -7,7 +7,7 @@ find_package(CUDA)
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../common
-	${CMAKE_CURRENT_SOURCE_DIR}/../cudaMPbTools
+	${CMAKE_CURRENT_SOURCE_DIR}/../cudaMPb
 	${Qt5Core_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
 	${CUDA_INCLUDE_DIRS})
@@ -24,7 +24,7 @@ cuda_add_executable(mPb ${MPB_SRCS} ${MPB_HEADR})
 target_link_libraries(mPb
 	libCommon
 	${OpenCV_LIBS}
-	cudaMPbTools)
+	cudaMPb)
 	
 qt5_use_modules(mPb Core)
 
