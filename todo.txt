@@ -1,3 +1,6 @@
-1. Create the edge detection images on the device. - ok
-2. Image padding. - ok
-3. Create the histograms. - ok
+1. Rename cudaMPbTools to cudaMPb
+2. Rename cudaimage to cudampb
+3. Create cpuMPb
+4. Create test program for cudaMPb and gpuMPb
+5. Autodetect how many blocks are available and how many threads can be inside a block
+6. Implement cudaMPb in a grid
