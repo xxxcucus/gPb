@@ -6,10 +6,10 @@ __global__ void calculateGradients(int row, double* dGradientImages, unsigned in
 	if (row < 2 * scale)
 		return;
 
-	int index = threadIdx.x;
-	int stride = blockDim.x;
+	int index = threadIdx.x + blockIdx.x * blockDim.x;
+	int j = index;
 
-	for (int j = scale + index; j < image_width + scale; j += stride) {
+	if (j >= scale && j < image_width + scale) {
 		unsigned int* vHist = dHistograms[row - scale] +  j * 2 * arcno * 256;
 
 		for (int i = 0; i < arcno; ++i) {
@@ -35,12 +35,12 @@ __global__ void calculateGradients(int row, double* dGradientImages, unsigned in
 
 __global__ void calcHisto(int row, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
 {
-	int index = threadIdx.x;
-	int stride = blockDim.x;
+	int index = threadIdx.x + blockIdx.x * blockDim.x;
 
 	int i = row;
+	int j = index;
 
-	for (int j = index; j < image_width + 2 * scale; j += stride) {
+	if (j < image_width + 2 * scale) {
 		//qDebug() << "BlaBla1 " << j;
 		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];
 		//printf("Index %d Val %d \n", j, int(val));
@@ -280,12 +280,16 @@ void CudaMPb::execute() {
 	initializeHistoRange(0, m_Scale + 1);
 	//printf("BlaBla 11\n");
 
+	int noThreads = 1024;
+	int noBlocks1 = (m_Width + 2 * m_Scale + noThreads - 1) / noThreads;
+	int noBlocks2 = (m_Width + m_Scale + noThreads - 1) / noThreads;
+
 	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
 		//printf("%d - BlaBla 1\n", i);
-		calcHisto<<<1, 1024>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calcHisto<<<noBlocks1, noThreads>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		//printf("%d - BlaBla 2\n", i);
-		calculateGradients<<<1, 1024>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calculateGradients<<<noBlocks2, noThreads>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		//printf("%d - BlaBla 3\n", i);
 		deleteFromHistoMaps(i);
