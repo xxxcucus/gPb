@@ -52,13 +52,16 @@ int main(int argc, char* argv[])
 	std::string grad03Path = "D:/ProjectsOpenCV/gPb/mPb/grad3.png";
 	cv::Mat img1 = cv::imread(sourcePath1, CV_LOAD_IMAGE_GRAYSCALE);
 	printf("BlaBla1\n");
-	CudaMPb cudaImg(img1.data, img1.cols, img1.rows, 10);
+	CudaMPb cudaImg(img1.data, img1.cols, img1.rows, 5);
 	if (!cudaImg.wasSuccessfullyCreated()) {
 		printf("Error in constructor %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
 	}
 	printf("BlaBla2\n");
-	cudaImg.execute();
+	if (!cudaImg.execute()) {
+		printf("Error when executing %s. Exiting\n", cudaImg.getErrorString());
+		exit(1);
+	}
 	printf("BlaBla3\n");
 	cv::Mat grad0(img1.rows, img1.cols, CV_64FC1, cudaImg.getGradientImage(0));
 	cv::imwrite(grad00Path, grad0);

@@ -6,7 +6,7 @@
 #include <cuda_runtime.h>
 
 __global__ void calculateGradients(int row, double* dGradientImages, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
-__global__ void calcHisto(int row, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
+__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
 
 
@@ -23,7 +23,7 @@ public:
 		return cudaGetErrorString(m_LastCudaError);
 	}
 
-	void execute();
+	bool execute();
 
 	/**
 	* returns the gradient image corresponding to the index arc
@@ -64,7 +64,7 @@ private:
 	* such that memory is used efficiently
 	* @param index
 	*/
-	void deleteFromHistoMaps(int index);
+	bool deleteFromHistoMaps(int step, int index);
 
     /**
      * Copies m_Masks->getHalfDiscInfluencePoints()

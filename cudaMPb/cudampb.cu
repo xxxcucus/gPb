@@ -33,14 +33,17 @@ __global__ void calculateGradients(int row, double* dGradientImages, unsigned in
 	}
 }
 
-__global__ void calcHisto(int row, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
+__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
 {
-	int index = threadIdx.x + blockIdx.x * blockDim.x;
+	int index = threadIdx.x;
+	int stride = blockDim.x;
+	int i = row + blockIdx.x;
 
-	int i = row;
-	int j = index;
+	if (blockIdx.x > row_count)
+		return;
 
-	if (j < image_width + 2 * scale) {
+
+	for (int j = index; j < image_width + 2 * scale; j += stride) {
 		//qDebug() << "BlaBla1 " << j;
 		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];
 		//printf("Index %d Val %d \n", j, int(val));
@@ -125,28 +128,40 @@ bool CudaMPb::initializeHistoRange(int start, int stop)
 {
 	for (int i = start; i < stop; ++i) {
 		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
+		//printf("Alloc %d\n", i);
 		if (m_LastCudaError != cudaSuccess) {
+			printf("cudaMalloc error 1: %d\n", i);
 			return false;
 		}
 
 		cudaMemcpy(m_dHistograms, m_hHistograms, stop * sizeof(unsigned int*), cudaMemcpyHostToDevice);
-		if (m_LastCudaError != cudaSuccess)
+		if (m_LastCudaError != cudaSuccess) {
+			printf("cudaMemcpy error 1\n");
 			return false;
+		}
 	}
 
 	return true;
 }
 
-void CudaMPb::deleteFromHistoMaps(int index) {
+bool CudaMPb::deleteFromHistoMaps(int step, int index) {
 
-	if (index + m_Scale + 1 < m_Height + 2 * m_Scale) {
-		initializeHistoRange(index + m_Scale + 1, index + m_Scale + 2);
+	if (index + m_Scale + step + 1 < m_Height + 2 * m_Scale) {
+		if (!initializeHistoRange(index + m_Scale + step + 1, index + m_Scale + step + 2))
+			return false;
 	}
 
 	if (index >= m_Scale + 1) {
-		cudaFree(m_hHistograms[index - m_Scale - 1]);
+		m_LastCudaError = cudaFree(m_hHistograms[index - m_Scale - 1]);
+		if (m_LastCudaError != cudaSuccess) {
+			printf("cudaFree error 1: %d\n", index);
+			return false;
+		}
+		//printf("Delete %d\n", index - m_Scale - 1);
 		m_hHistograms[index - m_Scale - 1] = nullptr;
 	}
+
+	return true;
 }
 
 bool CudaMPb::create2DHistoArray()
@@ -275,26 +290,38 @@ bool CudaMPb::initializeInfluencePoints() {
 	return true;	
 }
 
-void CudaMPb::execute() {
+bool CudaMPb::execute() {
 	//printf("BlaBla 10\n");
-	initializeHistoRange(0, m_Scale + 1);
+
 	//printf("BlaBla 11\n");
 
 	int noThreads = 1024;
 	int noBlocks1 = (m_Width + 2 * m_Scale + noThreads - 1) / noThreads;
 	int noBlocks2 = (m_Width + m_Scale + noThreads - 1) / noThreads;
 
-	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
+	int step = 100;
+	if (!initializeHistoRange(0, m_Scale + step + 1))
+		return false;
+	int noSteps = (m_Height + 2 * m_Scale + step - 1) / step;
+
+	for (int i = 0; i < noSteps; ++i) {
 		//printf("%d - BlaBla 1\n", i);
-		calcHisto<<<noBlocks1, noThreads>>>(i, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		int row_start = step * i;
+		int row_count = std::min(step, m_Height + 2 * m_Scale - row_start);
+		//printf("Row_start: %d Row_count %d \n", row_start, row_count);
+		calcHisto<<<row_count, noThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		//printf("%d - BlaBla 2\n", i);
-		calculateGradients<<<noBlocks2, noThreads>>>(i, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
-		cudaDeviceSynchronize();
+		for (int k = row_start; k < row_count + row_start; ++k) {
+			calculateGradients << <noBlocks2, noThreads >> > (k, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+			cudaDeviceSynchronize();
+			if (!deleteFromHistoMaps(step, k))
+				return false;
+		}
 		//printf("%d - BlaBla 3\n", i);
-		deleteFromHistoMaps(i);
 		//printf("%d - BlaBla 4\n", i);
 	}
 
 	m_LastCudaError = cudaMemcpy(m_hGradientImages, m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double), cudaMemcpyDeviceToHost);
+	return m_LastCudaError == cudaSuccess;
 }
