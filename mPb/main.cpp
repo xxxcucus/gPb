@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include "opencv2/opencv.hpp"
 #include "cudampb.h"
+#include <chrono>
 
 int main(int argc, char* argv[])
 {
@@ -58,10 +59,14 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	printf("BlaBla2\n");
+	auto start = std::chrono::high_resolution_clock::now();
 	if (!cudaImg.execute()) {
 		printf("Error when executing %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
 	}
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+	printf("GPU runtime %d\n", int(duration.count()));
 	printf("BlaBla3\n");
 	cv::Mat grad0(img1.rows, img1.cols, CV_64FC1, cudaImg.getGradientImage(0));
 	cv::imwrite(grad00Path, grad0);

@@ -2,6 +2,7 @@
 #include "cvector.h"
 #include <cstdlib>
 
+
 __global__ void calculateGradients(int row_start, int row_count, double* dGradientImages, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno) {
 	int row = row_start + blockIdx.x;
 	int index = threadIdx.x;
@@ -292,15 +293,16 @@ bool CudaMPb::initializeInfluencePoints() {
 }
 
 bool CudaMPb::execute() {
-	//printf("BlaBla 10\n");
+	printf("BlaBla 10\n");
+	
 
 	//printf("BlaBla 11\n");
 
-	int noThreads = 1024;
+	int noThreads = 256;
 	int noBlocks1 = (m_Width + 2 * m_Scale + noThreads - 1) / noThreads;
 	int noBlocks2 = (m_Width + m_Scale + noThreads - 1) / noThreads;
 
-	int step = 100;
+	int step = 7;
 	if (!initializeHistoRange(0, m_Scale + step + 1))
 		return false;
 	int noSteps = (m_Height + 2 * m_Scale + step - 1) / step;
@@ -322,9 +324,11 @@ bool CudaMPb::execute() {
 				return false;
 		}
 		//printf("%d - BlaBla 3\n", i);
-		//printf("%d - BlaBla 4\n", i);
+	
 	}
 
+	
 	m_LastCudaError = cudaMemcpy(m_hGradientImages, m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double), cudaMemcpyDeviceToHost);
 	return m_LastCudaError == cudaSuccess;
+	
 }
