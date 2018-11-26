@@ -1,32 +1,31 @@
 cmake_minimum_required (VERSION 3.10)
-project (mPb)
+project (cpuMPb)
 cmake_policy(SET CMP0020 NEW)
 
-find_package(CUDA)
+#find_package(CUDA)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../common
-	${CMAKE_CURRENT_SOURCE_DIR}/../cudaMPb
-	${Qt5Core_INCLUDE_DIRS}
-	${OpenCV_INCLUDE_DIRS}
-	${CUDA_INCLUDE_DIRS})
+	#${CMAKE_CURRENT_SOURCE_DIR}/../cudaMPb
+	#${Qt5Core_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS})
+	#${CUDA_INCLUDE_DIRS})
 
 set(MPB_SRCS 	
-	main.cpp
 	pbdetector.cpp
 )
 
 set(MPB_HEADR
 	pbdetector.h)
 
-cuda_add_executable(mPb ${MPB_SRCS} ${MPB_HEADR})
-target_link_libraries(mPb
+add_library(cpuMPb  STATIC ${MPB_SRCS} ${MPB_HEADR})
+target_link_libraries(cpuMPb
 	libCommon
-	${OpenCV_LIBS}
-	cudaMPb)
+	${OpenCV_LIBS})
+	#cudaMPb
 	
-qt5_use_modules(mPb Core)
+#qt5_use_modules(cpuMPb Core)
 
-install(TARGETS mPb DESTINATION .)
-install (FILES ${CMAKE_ROOT_DIR}/mPb/Sternchen2016.jpg DESTINATION .)
+#install(TARGETS mPb DESTINATION .)
+install (FILES ${CMAKE_ROOT_DIR}/cpuMPb/Sternchen2016.jpg DESTINATION .)

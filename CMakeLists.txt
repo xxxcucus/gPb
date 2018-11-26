@@ -20,10 +20,11 @@ endif(OpenCV_FOUND)
 
 SET(CMAKE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_subdirectory(mPb)
+add_subdirectory(cpuMPb)
 add_subdirectory(Textons)
 add_subdirectory(common)
 add_subdirectory(cudaMPb)
+add_subdirectory(testMPb)
 
 
 
