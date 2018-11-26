@@ -273,62 +273,31 @@ bool CudaMPb::initializeInfluencePoints() {
 	if (m_LastCudaError != cudaSuccess)
 		return false;
 
-
-	//tests if data was correctly copied to device
-	/*
-	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
-		int* values = (int*)malloc(m_hHalfDiscInfluencePoints[i].m_Size * sizeof(int));
-		cudaMemcpy(values, m_hHalfDiscInfluencePoints[i].m_Data, m_hHalfDiscInfluencePoints[i].m_Size * sizeof(int), cudaMemcpyDeviceToHost);
-		printf("Size device: %d\n", m_hHalfDiscInfluencePoints[i].m_Size);
-		for (int j = 0; j < m_hHalfDiscInfluencePoints[i].m_Size; ++j)
-			printf("%d ", values[j]);
-		printf("\n");
-		printf("Size host: %d\n", neighb[i].size());
-		for (int j = 0; j < neighb[i].size(); ++j)
-			printf("%d ", neighb[i][j]);
-		printf("\n");
-	}*/
-
 	return true;	
 }
 
 bool CudaMPb::execute() {
-	printf("BlaBla 10\n");
-	
-
-	//printf("BlaBla 11\n");
-
 	int noThreads = 256;
-	int noBlocks1 = (m_Width + 2 * m_Scale + noThreads - 1) / noThreads;
-	int noBlocks2 = (m_Width + m_Scale + noThreads - 1) / noThreads;
-
 	int step = 7;
+
 	if (!initializeHistoRange(0, m_Scale + step + 1))
 		return false;
 	int noSteps = (m_Height + 2 * m_Scale + step - 1) / step;
 
 	for (int i = 0; i < noSteps; ++i) {
-		//printf("%d - BlaBla 1\n", i);
 		int row_start = step * i;
 		int row_count = std::min(step, m_Height + 2 * m_Scale - row_start);
 		//printf("Row_start: %d Row_count %d \n", row_start, row_count);
 		calcHisto<<<row_count, noThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
-		//printf("%d - BlaBla 2\n", i);
-
 		calculateGradients << <row_count, noThreads >> > (row_start, row_count, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
-
 		for (int k = row_start; k < row_count + row_start; ++k) {
 			if (!deleteFromHistoMaps(step, k))
 				return false;
-		}
-		//printf("%d - BlaBla 3\n", i);
-	
+		}	
 	}
 
-	
 	m_LastCudaError = cudaMemcpy(m_hGradientImages, m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double), cudaMemcpyDeviceToHost);
-	return m_LastCudaError == cudaSuccess;
-	
+	return m_LastCudaError == cudaSuccess;	
 }

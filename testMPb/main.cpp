@@ -81,8 +81,6 @@ int main(int argc, char* argv[])
     /******************************************
      * test gradient calculation with CPU
      * ****************************************/
-
-	printf("Calculate gradients with CPU\n");
 	
     PbDetector pbd(scale, imgLabComp[2]);
 	auto cpu_start = std::chrono::high_resolution_clock::now();
@@ -95,8 +93,6 @@ int main(int argc, char* argv[])
     cv::imwrite(cpu_grad1Path, pbd.getGradientImage(1));
     cv::imwrite(cpu_grad2Path, pbd.getGradientImage(2));
     cv::imwrite(cpu_grad3Path, pbd.getGradientImage(3));
-
-
 
 	/******************************************
 	* cudaMPb

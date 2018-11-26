@@ -12,7 +12,7 @@ PbDetector::PbDetector(int scale, const cv::Mat& image): m_SingleChannelImage(im
 }
 
 void PbDetector::calculateGradients() {
-    qDebug() << "Build empty histograms";
+    //qDebug() << "Build empty histograms";
     HistoVect histograms;
     initializeHistoRange(histograms, 0, m_Scale + 1);
 
@@ -20,7 +20,7 @@ void PbDetector::calculateGradients() {
     cv::Mat bufImg(m_SingleChannelImage.rows + 2 * m_Scale, m_SingleChannelImage.cols + 2 * m_Scale, m_SingleChannelImage.type());
     cv::copyMakeBorder(m_SingleChannelImage, bufImg, m_Scale, m_Scale, m_Scale, m_Scale, cv::BORDER_REPLICATE);
 
-    qDebug() << "Compute gradients on " << bufImg.rows << " " << bufImg.cols << QTime::currentTime().toString("hh:mm:ss:zzz");
+    //qDebug() << "Compute gradients on " << bufImg.rows << " " << bufImg.cols << QTime::currentTime().toString("hh:mm:ss:zzz");
     QTime duration;
     duration.start();
 
@@ -40,7 +40,7 @@ void PbDetector::calculateGradients() {
         deleteFromHistoMaps(histograms, i);
     }
 
-    qDebug() << "Compute gradients has finished in " << duration.elapsed() / 1000 << " seconds.";
+    //qDebug() << "Compute gradients has finished in " << duration.elapsed() / 1000 << " seconds.";
 }
 
 void PbDetector::addToHistoMaps(HistoVect& vMaps, int val, int i, int j) {

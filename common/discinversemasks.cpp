@@ -24,10 +24,14 @@ void DiscInverseMasks::computeHalfDiscInfluencePoints() {
                     }
                  }
             }
-            if (retVal.size() > 2)
-                m_InfluencePoints.push_back(retVal);
-            else
-                qDebug() << i << " , " << j << " not found ";
+			if (retVal.size() > 2) {
+				m_InfluencePoints.push_back(retVal);
+			}
+			else {
+#if __DEBUG
+				qDebug() << i << " , " << j << " not found ";
+#endif
+			}
         }
     }
 }
