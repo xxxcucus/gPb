@@ -46,11 +46,11 @@ int main(int argc, char* argv[])
 	* cudaMPb
 	********************************************/
 
-	std::string sourcePath1 = "D:/ProjectsOpenCV/gPb/mPb/Sternchen2016.jpg";
-	std::string grad00Path = "D:/ProjectsOpenCV/gPb/mPb/grad0.png";
-	std::string grad01Path = "D:/ProjectsOpenCV/gPb/mPb/grad1.png";
-	std::string grad02Path = "D:/ProjectsOpenCV/gPb/mPb/grad2.png";
-	std::string grad03Path = "D:/ProjectsOpenCV/gPb/mPb/grad3.png";
+	std::string sourcePath1 = "Sternchen2016.jpg";
+	std::string grad00Path = "grad0.png";
+	std::string grad01Path = "grad1.png";
+	std::string grad02Path = "grad2.png";
+	std::string grad03Path = "grad3.png";
 	cv::Mat img1 = cv::imread(sourcePath1, CV_LOAD_IMAGE_GRAYSCALE);
 	printf("BlaBla1\n");
 	CudaMPb cudaImg(img1.data, img1.cols, img1.rows, 5);

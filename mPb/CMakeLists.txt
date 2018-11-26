@@ -29,3 +29,4 @@ target_link_libraries(mPb
 qt5_use_modules(mPb Core)
 
 install(TARGETS mPb DESTINATION .)
+install (FILES ${CMAKE_ROOT_DIR}/mPb/Sternchen2016.jpg DESTINATION .)
