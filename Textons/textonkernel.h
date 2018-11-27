@@ -3,7 +3,6 @@
 
 #include "opencv2/opencv.hpp"
 
-
 /**
  * @brief The TextonKernel class models a kernel based on a gaussian
  */

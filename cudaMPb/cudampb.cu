@@ -44,7 +44,6 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 	if (blockIdx.x > row_count)
 		return;
 
-
 	for (int j = index; j < image_width + 2 * scale; j += stride) {
 		//qDebug() << "BlaBla1 " << j;
 		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];

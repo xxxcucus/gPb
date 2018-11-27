@@ -5,7 +5,6 @@
 TextonKernel::TextonKernel(int ksize, double orientation, double sigma, double sigmaXFactor, double sigmaYFactor):
     m_KernelSize(ksize), m_SigmaYFactor(sigmaYFactor), m_SigmaXFactor(sigmaXFactor), m_Sigma(sigma), m_Orientation(orientation) {
     m_Kernel = cv::Mat(cv::Size(m_KernelSize, m_KernelSize), CV_64FC1);
-
 }
 
 void TextonKernel::init() {

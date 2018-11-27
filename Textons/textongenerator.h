@@ -84,7 +84,7 @@ private:
 
 
 private:
-    QString m_DataPath = "D:\\ISA\\Freilassing1";
+    QString m_DataPath = "data";
     QString m_ReprTextonsPath = "D:\\ProjectsOpenCV\\gPb\\Textons\\Tests\\cluster_centers.txt";
 
     //filters used to compute the textons
