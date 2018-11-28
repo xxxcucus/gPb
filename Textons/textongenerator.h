@@ -16,7 +16,6 @@
  * Path to images folder should be received as parameter
  */
 
-
 class TextonGenerator
 {
 public:

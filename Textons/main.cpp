@@ -7,8 +7,6 @@
 #include "textongenerator.h"
 #include "texton.h"
 
-
-
 int main(int /*argc*/, char** /*argv[]*/)
 {
     double sigma = 1.0;
