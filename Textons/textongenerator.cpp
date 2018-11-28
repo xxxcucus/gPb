@@ -69,7 +69,7 @@ void TextonGenerator::computeFilePaths() {
                 if (qfi_image.isFile()) {
                     //printf("%s\n", qPrintable(qfi_image.absoluteFilePath()));
                     m_ImagesPaths.push_back(std::string(qfi_image.absoluteFilePath().toUtf8().constData()));
-                    if (count < 2)
+                    //if (count < 2)
                         m_SmallSetImagesPaths.push_back(std::string(qfi_image.absoluteFilePath().toUtf8().constData()));
                     count++;
                 }

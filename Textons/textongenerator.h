@@ -29,6 +29,10 @@ public:
      */
     void execute();
 
+	void setDataPath(const QString& path) {
+		m_DataPath = path;
+	}
+
 
 private:
     void createFilterBanks();
@@ -84,7 +88,7 @@ private:
 
 private:
     QString m_DataPath = "data";
-    QString m_ReprTextonsPath = "D:\\ProjectsOpenCV\\gPb\\Textons\\Tests\\cluster_centers.txt";
+    QString m_ReprTextonsPath = "cluster_centers.txt";
 
     //filters used to compute the textons
     std::vector<TextonKernel*> m_FilterBank;

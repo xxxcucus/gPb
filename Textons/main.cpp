@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <QString>
 #include "opencv2/opencv.hpp"
 #include "gaussianfirstderivativefilter.h"
 #include "gaussiansecondderivativefilter.h"
@@ -7,7 +8,7 @@
 #include "textongenerator.h"
 #include "texton.h"
 
-int main(int /*argc*/, char** /*argv[]*/)
+int main(int argc, char* argv[])
 {
     double sigma = 1.0;
     for (int k = 0; k < 0; ++k) {
@@ -20,7 +21,7 @@ int main(int /*argc*/, char** /*argv[]*/)
     }
 
     sigma = 3.0;
-    for (int k = 0; k < 1; ++k) {
+    for (int k = 0; k < 0; ++k) {
         for (int i = 0; i < 8; ++i) {
             printf("Second derivative filter for %f degrees %f sigma\n", double(i) * 22.5, sigma);
             GaussianSecondDerivativeFilter gdf(15, double(i) * 22.5, sigma);
@@ -60,7 +61,15 @@ int main(int /*argc*/, char** /*argv[]*/)
     Texton t3 = t1 + t2;
     t3 = t3 / 2.0;
     printf("Texton1 : %s\n", qPrintable(t3.toString()));
+
+	QString textonDBPath;
+	if (argc > 1) {
+		textonDBPath = QString(argv[1]);
+	}
+
     TextonGenerator tg;
+	if (argc > 1)
+		tg.setDataPath(textonDBPath);
     tg.execute();
 
     return 0;
