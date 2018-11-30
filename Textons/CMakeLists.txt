@@ -31,3 +31,4 @@ target_link_libraries(Textons
 	${OpenCV_LIBS})
 qt5_use_modules(Textons Core)
 
+install(TARGETS Textons DESTINATION .)

@@ -14,9 +14,12 @@
 
 TextonGenerator::TextonGenerator() {
     std::srand(std::time(0));
-    createFilterBanks();
-    computeFilePaths();
-    initClusterCenters();
+	printf("Create filter banks\n");
+	createFilterBanks();
+	printf("Compute file paths \n");
+	computeFilePaths();
+	printf("Init cluster centers \n");
+	initClusterCenters();
 }
 
 void TextonGenerator::createFilterBanks() {
@@ -56,17 +59,19 @@ void TextonGenerator::computeFilePaths() {
         return;
     }
     QDir dir_dataPath(m_DataPath);
-    QFileInfoList qfi_list_dataPath = dir_dataPath.entryInfoList();
+	QStringList filters;
+	printf("Searching in path %s\n", qPrintable(dir_dataPath.canonicalPath()));
+	QFileInfoList qfi_list_dataPath = dir_dataPath.entryInfoList(filters);
     for (QFileInfo qfi_elem : qfi_list_dataPath) {
         if (qfi_elem.isDir()) {
-            printf("%s\n", qPrintable(qfi_elem.absoluteFilePath()));
+            printf("1 %s\n", qPrintable(qfi_elem.absoluteFilePath()));
             QDir dir_classDir(qfi_elem.absoluteFilePath());
-            QFileInfoList qfi_list_classDir = dir_classDir.entryInfoList();
+            QFileInfoList qfi_list_classDir = dir_classDir.entryInfoList(filters, QDir::NoDot | QDir::NoDotDot);
 
             int count = 0;
             for (QFileInfo qfi_image : qfi_list_classDir) {
                 if (qfi_image.isFile()) {
-                    //printf("%s\n", qPrintable(qfi_image.absoluteFilePath()));
+                    printf("11 %s\n", qPrintable(qfi_image.absoluteFilePath()));
                     m_ImagesPaths.push_back(qfi_image.absoluteFilePath().toUtf8().constData());
                     //if (count < 2)
                     m_SmallSetImagesPaths.push_back(qfi_image.absoluteFilePath().toUtf8().constData());
@@ -74,6 +79,7 @@ void TextonGenerator::computeFilePaths() {
                 }
             }
 		} else if (qfi_elem.isFile()) {
+			printf("2 %s\n", qPrintable(qfi_elem.absoluteFilePath()));
 			m_ImagesPaths.push_back(qfi_elem.absoluteFilePath().toUtf8().constData());
 			m_SmallSetImagesPaths.push_back(qfi_elem.absoluteFilePath().toUtf8().constData());
 		}
@@ -98,9 +104,7 @@ void TextonGenerator::initClusterCenters() {
     for (int i = 0; i < m_ClusterNo; ++i) {
         int imgId = generateRandom(imagesNo);
         std::string imgPath = m_SmallSetImagesPaths[imgId];
-        cv::Mat img = cv::imread(imgPath);
-        cv::Mat greyImg;
-        cv::cvtColor(img, greyImg, cv::COLOR_BGR2GRAY);
+        cv::Mat greyImg = cv::imread(imgPath, cv::IMREAD_GRAYSCALE);
         int x = generateRandom(greyImg.cols);
         int y = generateRandom(greyImg.rows);
         std::vector<cv::Mat> filtImgs = runFilterBankOnGrayscaleImage(greyImg);
@@ -137,7 +141,7 @@ std::vector<std::pair<Texton, int>> TextonGenerator::runKMeansOnImage(const cv::
 
     if (saveImages) {
         for (unsigned int i = 0; i < filtImgs.size(); ++i) {
-            QString name = "D:\\ProjectsOpenCV\\Textons\\Tests\\test" + QString::number(imgIndex) + "_" + QString::number(i) + "_" + ".png";
+            QString name = "test" + QString::number(imgIndex) + "_" + QString::number(i) + "_" + ".png";
             cv::imwrite(name.toUtf8().constData(), filtImgs[i]);
         }
     }
@@ -210,9 +214,11 @@ void TextonGenerator::runKMeansIteration() {
 }
 
 void TextonGenerator::execute() {
+	printf("Execute \n");
     writeClusterCentersToFile();
     for (int i = 0; i < m_IterationsNo; ++i) {
-        runKMeansIteration();
+		printf("Iteration %d\n", i + 1);
+		runKMeansIteration();
         writeClusterCentersToFile();
     }
 }

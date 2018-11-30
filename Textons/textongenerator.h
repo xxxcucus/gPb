@@ -86,7 +86,7 @@ private:
 
 
 private:
-    QString m_DataPath = "data";
+    QString m_DataPath = "textures/";
     QString m_ReprTextonsPath = "cluster_centers.txt";
 
     //filters used to compute the textons
