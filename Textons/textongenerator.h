@@ -21,10 +21,6 @@ class TextonGenerator
 public:
     TextonGenerator();
     /**
-     * @brief calculates filter bank response on the images in m_SmallSetImagesPaths
-     */
-    void generateTestImages();
-    /**
      * @brief: runs runKMeansIteration m_IterationNo times and writes the results after each step to file
      */
     void execute();

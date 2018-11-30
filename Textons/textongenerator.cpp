@@ -80,11 +80,6 @@ void TextonGenerator::computeFilePaths() {
     }
 }
 
-/*std::string imgPath = std::string(q1.absoluteFilePath().toUtf8().constData());
-cv::Mat img = cv::imread(imgPath);
-cv::Mat greyImg;
-cv::cvtColor(img, greyImg, cv::COLOR_BGR2GRAY);*/
-
 std::vector<cv::Mat> TextonGenerator::runFilterBankOnGrayscaleImage(const cv::Mat &greyImg) {
     std::vector<cv::Mat> retVal;
     for (auto f : m_FilterBank) {
@@ -182,9 +177,7 @@ void TextonGenerator::runKMeansIteration() {
 
     for (std::string imagePath : m_SmallSetImagesPaths) {
         printf("%s : %d/%d \n", imagePath.c_str(), count, total);
-        cv::Mat img = cv::imread(imagePath);
-        cv::Mat greyImg;
-        cv::cvtColor(img, greyImg, cv::COLOR_BGR2GRAY);
+        cv::Mat greyImg = cv::imread(imagePath, cv::IMREAD_GRAYSCALE);
 
         std::vector<std::pair<Texton, int>> kmeansData = runKMeansOnImage(greyImg, false);
         vKmeansData.push_back(kmeansData);
@@ -213,14 +206,6 @@ void TextonGenerator::runKMeansIteration() {
     for (int i = 0; i < m_ClusterNo; ++i) {
         m_ClusterCenters[i] = sums[i];
         m_ClusterCenters[i].print();
-    }
-}
-
-void TextonGenerator::generateTestImages() {
-    for (std::string imagePath : m_SmallSetImagesPaths) {
-        printf("%s : \n", imagePath.c_str());
-        cv::Mat greyImg = cv::imread(imagePath, cv::IMREAD_GRAYSCALE);
-        std::vector<std::pair<Texton, int>> kmeansData = runKMeansOnImage(greyImg, true);
     }
 }
 
