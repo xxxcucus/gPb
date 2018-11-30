@@ -14,7 +14,6 @@
 
 TextonGenerator::TextonGenerator() {
     std::srand(std::time(0));
-
     createFilterBanks();
     computeFilePaths();
     initClusterCenters();
@@ -58,23 +57,26 @@ void TextonGenerator::computeFilePaths() {
     }
     QDir dir_dataPath(m_DataPath);
     QFileInfoList qfi_list_dataPath = dir_dataPath.entryInfoList();
-    for (QFileInfo qfi_classDir : qfi_list_dataPath) {
-        if (qfi_classDir.isDir()) {
-            printf("%s\n", qPrintable(qfi_classDir.absoluteFilePath()));
-            QDir dir_classDir(qfi_classDir.absoluteFilePath());
+    for (QFileInfo qfi_elem : qfi_list_dataPath) {
+        if (qfi_elem.isDir()) {
+            printf("%s\n", qPrintable(qfi_elem.absoluteFilePath()));
+            QDir dir_classDir(qfi_elem.absoluteFilePath());
             QFileInfoList qfi_list_classDir = dir_classDir.entryInfoList();
 
             int count = 0;
             for (QFileInfo qfi_image : qfi_list_classDir) {
                 if (qfi_image.isFile()) {
                     //printf("%s\n", qPrintable(qfi_image.absoluteFilePath()));
-                    m_ImagesPaths.push_back(std::string(qfi_image.absoluteFilePath().toUtf8().constData()));
+                    m_ImagesPaths.push_back(qfi_image.absoluteFilePath().toUtf8().constData());
                     //if (count < 2)
-                        m_SmallSetImagesPaths.push_back(std::string(qfi_image.absoluteFilePath().toUtf8().constData()));
+                    m_SmallSetImagesPaths.push_back(qfi_image.absoluteFilePath().toUtf8().constData());
                     count++;
                 }
             }
-        }
+		} else if (qfi_elem.isFile()) {
+			m_ImagesPaths.push_back(qfi_elem.absoluteFilePath().toUtf8().constData());
+			m_SmallSetImagesPaths.push_back(qfi_elem.absoluteFilePath().toUtf8().constData());
+		}
     }
 }
 
@@ -89,7 +91,8 @@ std::vector<cv::Mat> TextonGenerator::runFilterBankOnGrayscaleImage(const cv::Ma
         cv::Mat filtImg;
         cv::filter2D(greyImg, filtImg, -1, f->getKernel(), cv::Point(-1, -1), CV_16S);
         cv::Mat rescaled;
-        cv::convertScaleAbs(filtImg, rescaled, 5.0);
+        //TODO: is this needed?
+		cv::convertScaleAbs(filtImg, rescaled, 5.0);
         retVal.push_back(filtImg);
     }
     return retVal;
@@ -216,10 +219,7 @@ void TextonGenerator::runKMeansIteration() {
 void TextonGenerator::generateTestImages() {
     for (std::string imagePath : m_SmallSetImagesPaths) {
         printf("%s : \n", imagePath.c_str());
-        cv::Mat img = cv::imread(imagePath);
-        cv::Mat greyImg;
-        cv::cvtColor(img, greyImg, cv::COLOR_BGR2GRAY);
-
+        cv::Mat greyImg = cv::imread(imagePath, cv::IMREAD_GRAYSCALE);
         std::vector<std::pair<Texton, int>> kmeansData = runKMeansOnImage(greyImg, true);
     }
 }

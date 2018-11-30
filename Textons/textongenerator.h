@@ -35,14 +35,17 @@ public:
 
 
 private:
-    void createFilterBanks();
-    /****************
-     * @brief creates the file paths that will be used for the texton generation
-     * is not necessary maybe to use so many files
+    
+	/**
+	* @brief Creates the filter array used for texton generation
+	*/	
+	void createFilterBanks();
+    /**
+     * @brief saves the file paths that will be used for the texton generation
      */
     void computeFilePaths();
     /**
-     * @brief initialize the most representative textons
+     * @brief initialize the cluster centers for KMeans clustering of the textons
      */
     void initClusterCenters();
 
