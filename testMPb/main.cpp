@@ -55,6 +55,10 @@ int main(int argc, char* argv[])
 	std::string cuda_grad3Path = "cuda_grad3.png";
 
 	std::string lCompPath = "LComp.png";
+	std::string aCompPath = "AComp.png";
+	std::string bCompPath = "BComp.png";
+	std::string textonPath = "textonComp.png";
+
 	std::string cpu_grad0Path = "cpu_grad0.png";
 	std::string cpu_grad1Path = "cpu_grad1.png";
 	std::string cpu_grad2Path = "cpu_grad2.png";
@@ -74,6 +78,8 @@ int main(int argc, char* argv[])
 	std::vector<cv::Mat> imgLabComp;
 	cv::split(imgLab, imgLabComp);
 	cv::imwrite(lCompPath, imgLabComp[2]);
+	cv::imwrite(aCompPath, imgLabComp[0]);
+	cv::imwrite(bCompPath, imgLabComp[1]);
 	//qDebug() << "Saving L component" << lCompPath.c_str();
 
 	int scale = 5;
