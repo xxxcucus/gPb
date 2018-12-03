@@ -8,6 +8,8 @@
 #include "discdirectmasks.h"
 #include "discinversemasks.h"
 #include "pbdetector.h"
+#include "texton.h"
+#include "textontools.h"
 
 int main(int argc, char* argv[])
 {
@@ -81,6 +83,23 @@ int main(int argc, char* argv[])
 	cv::imwrite(aCompPath, imgLabComp[0]);
 	cv::imwrite(bCompPath, imgLabComp[1]);
 	//qDebug() << "Saving L component" << lCompPath.c_str();
+
+	cv::Mat img_for_textons = cv::imread(sourcePath, cv::IMREAD_GRAYSCALE);
+	cv::Mat res_img_textons;
+	cv::resize(img_for_textons, res_img_textons, cv::Size(nCols, nRows));
+	std::vector<Texton> textons;
+	std::string textonPath = "textons.txt";
+	if (!TextonTools::readFromTextonsFile(textonPath, textons)) {
+		printf("Could not read the textons \n");
+		exit(1);
+	}
+
+	cv::Mat textonImage;
+	if (!TextonTools::convertToTextonImage(res_img_textons, textonImage)) {
+		printf("Error when converting to texton image\n");
+		exit(1);
+	}
+
 
 	int scale = 5;
 

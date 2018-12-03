@@ -11,6 +11,7 @@ include_directories(
 	)
 
 set(COMMON_SRCS
+	textons/textontools.cpp
 	textons/texton.cpp
 	textons/textonkernel.cpp
 	textons/gaussianfilter.cpp
@@ -21,6 +22,7 @@ set(COMMON_SRCS
 	)
 
 set(COMMON_HEADR 
+	textons/textontools.h
 	textons/texton.h
 	textons/textonkernel.h
 	textons/gaussianfilter.h

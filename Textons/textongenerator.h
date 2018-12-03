@@ -29,7 +29,6 @@ public:
 		m_DataPath = path;
 	}
 
-
 private:
     
 	/**

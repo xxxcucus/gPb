@@ -7,6 +7,7 @@ find_package(CUDA)
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/masks/
+	${CMAKE_CURRENT_SOURCE_DIR}/../common/textons/
 	${CMAKE_CURRENT_SOURCE_DIR}/../cudaMPb
 	${CMAKE_CURRENT_SOURCE_DIR}/../cpuMPb
 	${Qt5Core_INCLUDE_DIRS}
