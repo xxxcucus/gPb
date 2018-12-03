@@ -11,6 +11,7 @@ include_directories(
 	)
 
 set(COMMON_SRCS
+	textons/textongenerator.cpp
 	textons/textontools.cpp
 	textons/texton.cpp
 	textons/textonkernel.cpp
@@ -22,6 +23,7 @@ set(COMMON_SRCS
 	)
 
 set(COMMON_HEADR 
+	textons/textongenerator.h
 	textons/textontools.h
 	textons/texton.h
 	textons/textonkernel.h

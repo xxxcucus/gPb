@@ -44,6 +44,6 @@ bool TextonTools::readFromTextonsFile(const std::string& path, std::vector<Texto
 //image should be CV_UC1
 bool TextonTools::convertToTextonImage(cv::Mat img, cv::Mat result) {
 	
-
+	return true;
 
 }

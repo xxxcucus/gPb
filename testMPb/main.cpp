@@ -88,8 +88,8 @@ int main(int argc, char* argv[])
 	cv::Mat res_img_textons;
 	cv::resize(img_for_textons, res_img_textons, cv::Size(nCols, nRows));
 	std::vector<Texton> textons;
-	std::string textonPath = "textons.txt";
-	if (!TextonTools::readFromTextonsFile(textonPath, textons)) {
+	std::string textonQuantPath = "textons.txt";
+	if (!TextonTools::readFromTextonsFile(textonQuantPath, textons)) {
 		printf("Could not read the textons \n");
 		exit(1);
 	}

@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.10)
-project (Textons)
+project (TextonGenerator)
 cmake_policy(SET CMP0020 NEW)
 
 include_directories(
@@ -10,17 +10,13 @@ include_directories(
 
 set(TEXTONS_SRCS 	
 	main.cpp
-	textongenerator.cpp
 )
 
-set(TEXTON_HEADR
-	textongenerator.h)
-
-add_executable(Textons 
-	${TEXTONS_SRCS} ${TEXTON_HEADR})
-target_link_libraries(Textons
+add_executable(TextonGenerator 
+	${TEXTONS_SRCS})
+target_link_libraries(TextonGenerator
 	libCommon
 	${OpenCV_LIBS})
-qt5_use_modules(Textons Core)
+qt5_use_modules(TextonGenerator Core)
 
-install(TARGETS Textons DESTINATION .)
+install(TARGETS TextonGenerator DESTINATION .)
