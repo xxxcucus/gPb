@@ -4,11 +4,32 @@ cmake_policy(SET CMP0020 NEW)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/common/
+	${CMAKE_CURRENT_SOURCE_DIR}/textons/
 	${Qt5Core_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
 	)
 
-set(COMMON_SRCS texton.cpp discdirectmasks.cpp discinversemasks.cpp)
-set(COMMON_HEADR texton.h discdirectmasks.h discinversemasks.h)
-add_library(libCommon STATIC ${COMMON_SRCS} ${COMMON_HEADR})
+set(COMMON_SRCS
+	textons/texton.cpp
+	textons/textonkernel.cpp
+	textons/gaussianfilter.cpp
+	textons/gaussianfirstderivativefilter.cpp
+	textons/gaussiansecondderivativefilter.cpp
+	masks/discdirectmasks.cpp
+	masks/discinversemasks.cpp
+	)
 
+set(COMMON_HEADR 
+	textons/texton.h
+	textons/textonkernel.h
+	textons/gaussianfilter.h
+	textons/gaussianfirstderivativefilter.h
+	textons/gaussiansecondderivativefilter.h	
+	masks/discdirectmasks.h
+	masks/discinversemasks.h
+	)
+	
+add_library(libCommon STATIC ${COMMON_SRCS} ${COMMON_HEADR})
+target_link_libraries(libCommon ${OpenCV_LIBS})
 qt5_use_modules(libCommon Core)

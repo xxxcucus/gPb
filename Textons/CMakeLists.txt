@@ -4,25 +4,17 @@ cmake_policy(SET CMP0020 NEW)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/../common
+	${CMAKE_CURRENT_SOURCE_DIR}/../common/textons
 	${Qt5Core_INCLUDE_DIRS}
 	${OpenCV_INCLUDES})
 
 set(TEXTONS_SRCS 	
-	gaussianfilter.cpp
-	gaussianfirstderivativefilter.cpp
-	gaussiansecondderivativefilter.cpp
 	main.cpp
 	textongenerator.cpp
-	textonkernel.cpp
 )
 
 set(TEXTON_HEADR
-	gaussianfilter.h
-	gaussianfirstderivativefilter.h
-	gaussiansecondderivativefilter.h
-	textongenerator.h
-	textonkernel.h)
+	textongenerator.h)
 
 add_executable(Textons 
 	${TEXTONS_SRCS} ${TEXTON_HEADR})
