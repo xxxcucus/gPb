@@ -7,6 +7,7 @@
 #include "textonkernel.h"
 #include "textongenerator.h"
 #include "texton.h"
+#include "filterbank.h"
 
 int main(int argc, char* argv[])
 {
@@ -67,7 +68,8 @@ int main(int argc, char* argv[])
 		textonDBPath = QString(argv[1]);
 	}
 
-    TextonGenerator tg;
+	FilterBank filterBank;
+    TextonGenerator tg(filterBank);
 	if (argc > 1)
 		tg.setDataPath(textonDBPath);
     tg.execute();

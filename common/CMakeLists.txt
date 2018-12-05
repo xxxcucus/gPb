@@ -11,6 +11,7 @@ include_directories(
 	)
 
 set(COMMON_SRCS
+	filterbank.cpp
 	textons/textongenerator.cpp
 	textons/textontools.cpp
 	textons/texton.cpp
@@ -22,7 +23,8 @@ set(COMMON_SRCS
 	masks/discinversemasks.cpp
 	)
 
-set(COMMON_HEADR 
+set(COMMON_HEADR
+	filterbank.h 
 	textons/textongenerator.h
 	textons/textontools.h
 	textons/texton.h

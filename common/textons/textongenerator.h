@@ -4,6 +4,7 @@
 
 #include "textonkernel.h"
 #include "texton.h"
+#include "filterbank.h"
 #include <QString>
 
 /**
@@ -19,7 +20,7 @@
 class TextonGenerator
 {
 public:
-    TextonGenerator();
+    TextonGenerator(FilterBank& filterBank);
     /**
      * @brief: runs runKMeansIteration m_IterationNo times and writes the results after each step to file
      */
@@ -31,10 +32,6 @@ public:
 
 private:
     
-	/**
-	* @brief Creates the filter array used for texton generation
-	*/	
-	void createFilterBanks();
     /**
      * @brief saves the file paths that will be used for the texton generation
      */
@@ -52,13 +49,6 @@ private:
      * @param img
      */
     std::vector<std::pair<Texton, int>> runKMeansOnImage(const cv::Mat& img, bool saveImages);
-
-    /**
-     * @brief runFilterBankOnGrayscaleImage - run on the filters on the image to obtain a multidimensional filtered image
-     * @param img
-     * @return
-     */
-    std::vector<cv::Mat> runFilterBankOnGrayscaleImage(const cv::Mat& img);
 
     /**
      * @brief generateRandom - generates random integer between 0 and maxVal - 1
@@ -88,8 +78,8 @@ private:
     QString m_DataPath = "textures/";
     QString m_ReprTextonsPath = "cluster_centers.txt";
 
-    //filters used to compute the textons
-    std::vector<TextonKernel*> m_FilterBank;
+	FilterBank& m_FilterBank;
+
     //images used to compute the most representative textons
     std::vector<std::string> m_ImagesPaths;
     std::vector<std::string> m_SmallSetImagesPaths;

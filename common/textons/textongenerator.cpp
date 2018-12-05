@@ -7,49 +7,12 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "gaussianfilter.h"
-#include "gaussianfirstderivativefilter.h"
-#include "gaussiansecondderivativefilter.h"
-
-
-TextonGenerator::TextonGenerator() {
+TextonGenerator::TextonGenerator(FilterBank& filterBank) : m_FilterBank(filterBank) {
     std::srand(std::time(0));
-	printf("Create filter banks\n");
-	createFilterBanks();
 	printf("Compute file paths \n");
 	computeFilePaths();
 	printf("Init cluster centers \n");
 	initClusterCenters();
-}
-
-void TextonGenerator::createFilterBanks() {
-    double sigma = 1.0;
-
-    for (int k = 0; k < 2; k++) {
-        for (int i = 0; i < 4; ++i) {
-            TextonKernel* tk = new GaussianFirstDerivativeFilter(5, double(i) * 22.5, (k + 1) * sigma);
-            tk->init();
-            m_FilterBank.push_back(tk);
-        }
-    }
-
-    for (int k = 0; k < 2; k++) {
-        for (int i = 0; i < 4; ++i) {
-            TextonKernel* tk = new GaussianSecondDerivativeFilter( 5 + (k + 1) * 4, double(i) * 22.5, (k + 1) * sigma);
-            tk->init();
-            m_FilterBank.push_back(tk);
-        }
-    }
-
-    TextonKernel* tk = new GaussianFilter(9, sigma);
-    tk->init();
-    m_FilterBank.push_back(tk);
-
-    for (unsigned int i = 0; i < m_FilterBank.size(); ++i) {
-        printf("Matrix %u\n", i);
-        m_FilterBank[i]->printValues();
-        printf("\n");
-    }
 }
 
 void TextonGenerator::computeFilePaths() {
@@ -86,19 +49,6 @@ void TextonGenerator::computeFilePaths() {
     }
 }
 
-std::vector<cv::Mat> TextonGenerator::runFilterBankOnGrayscaleImage(const cv::Mat &greyImg) {
-    std::vector<cv::Mat> retVal;
-    for (auto f : m_FilterBank) {
-        cv::Mat filtImg;
-        cv::filter2D(greyImg, filtImg, -1, f->getKernel(), cv::Point(-1, -1), CV_16S);
-        cv::Mat rescaled;
-        //TODO: is this needed?
-		cv::convertScaleAbs(filtImg, rescaled, 5.0);
-        retVal.push_back(filtImg);
-    }
-    return retVal;
-}
-
 void TextonGenerator::initClusterCenters() {
     int imagesNo = static_cast<int>(m_SmallSetImagesPaths.size());
     for (int i = 0; i < m_ClusterNo; ++i) {
@@ -107,7 +57,7 @@ void TextonGenerator::initClusterCenters() {
         cv::Mat greyImg = cv::imread(imgPath, cv::IMREAD_GRAYSCALE);
         int x = generateRandom(greyImg.cols);
         int y = generateRandom(greyImg.rows);
-        std::vector<cv::Mat> filtImgs = runFilterBankOnGrayscaleImage(greyImg);
+        std::vector<cv::Mat> filtImgs = m_FilterBank.runOnGrayScaleImage(greyImg);
         Texton t = getTexton(filtImgs, x, y);
         m_ClusterCenters.push_back(t);
     }
@@ -137,7 +87,7 @@ std::vector<std::pair<Texton, int>> TextonGenerator::runKMeansOnImage(const cv::
         kmeansData.push_back(std::make_pair(Texton(), 0));
     }
 
-    std::vector<cv::Mat> filtImgs = runFilterBankOnGrayscaleImage(img);
+    std::vector<cv::Mat> filtImgs = m_FilterBank.runOnGrayScaleImage(img);
 
     if (saveImages) {
         for (unsigned int i = 0; i < filtImgs.size(); ++i) {
