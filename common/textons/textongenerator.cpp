@@ -6,6 +6,7 @@
 #include <QTextStream>
 #include <cstdlib>
 #include <ctime>
+#include "textontools.h"
 
 TextonGenerator::TextonGenerator(FilterBank& filterBank) : m_FilterBank(filterBank) {
     std::srand(std::time(0));
@@ -58,7 +59,7 @@ void TextonGenerator::initClusterCenters() {
         int x = generateRandom(greyImg.cols);
         int y = generateRandom(greyImg.rows);
         std::vector<cv::Mat> filtImgs = m_FilterBank.runOnGrayScaleImage(greyImg);
-        Texton t = getTexton(filtImgs, x, y);
+        Texton t = TextonTools::getTexton(filtImgs, x, y);
         m_ClusterCenters.push_back(t);
     }
 
@@ -66,14 +67,6 @@ void TextonGenerator::initClusterCenters() {
     for (int i = 0; i < m_ClusterNo; ++i) {
         m_ClusterCenters[i].print();
     }
-}
-
-Texton TextonGenerator::getTexton(const std::vector<cv::Mat>& filtImgs, int x, int y) {
-    Texton t(static_cast<int>(filtImgs.size()));
-    for (unsigned int i = 0; i < filtImgs.size(); ++i) {
-        t.setValueAtIdx(filtImgs[i].at<uchar>(y, x), i);
-    }
-    return t;
 }
 
 int TextonGenerator::generateRandom(int maxVal) {
@@ -99,8 +92,8 @@ std::vector<std::pair<Texton, int>> TextonGenerator::runKMeansOnImage(const cv::
 
     for (int i = 0; i < img.rows; ++i) {
         for (int j = 0; j < img.cols; ++j) {
-            Texton t = getTexton(filtImgs, j, i);
-            int cIdx = getClosestClusterCenter(t);
+            Texton t = TextonTools::getTexton(filtImgs, j, i);
+            int cIdx = TextonTools::getClosestClusterCenter(t, m_ClusterCenters);
             auto& v = kmeansData[cIdx];
             v.first = v.first + t;
             v.second = v.second + 1;
@@ -108,19 +101,6 @@ std::vector<std::pair<Texton, int>> TextonGenerator::runKMeansOnImage(const cv::
     }
 
     return kmeansData;
-}
-
-int TextonGenerator::getClosestClusterCenter(const Texton& t) {
-    int closest = 0;
-    double minDist = t.dist(m_ClusterCenters[0]);
-    for (int i = 1; i < m_ClusterNo; ++i) {
-        double dist = t.dist(m_ClusterCenters[i]);
-        if (dist < minDist) {
-            minDist = dist;
-            closest = i;
-        }
-    }
-    return closest;
 }
 
 ///@todo:

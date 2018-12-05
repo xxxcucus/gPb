@@ -57,15 +57,9 @@ private:
      */
     int generateRandom(int maxVal);
 
-    /**
-     * @brief getTexton - gets a texton from a set of filtered images
-     * @param filtImgs
-     * @param x - position in the images the texton is calculated for
-     * @param y
-     * @return
-     */
-    Texton getTexton(const std::vector<cv::Mat>& filtImgs, int x, int y);
-    int getClosestClusterCenter(const Texton& t);
+
+
+ 
 
     /**
      * @brief runKMeansIteration - reads all the images, and runs runKMeansOnImage, gathers the results for all images

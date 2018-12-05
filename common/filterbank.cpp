@@ -3,6 +3,7 @@
 #include "gaussianfilter.h"
 #include "gaussianfirstderivativefilter.h"
 #include "gaussiansecondderivativefilter.h"
+#include "texton.h"
 
 FilterBank::~FilterBank() {
 	for (auto f : m_FilterBank)

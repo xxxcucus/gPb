@@ -95,29 +95,31 @@ int main(int argc, char* argv[])
 	}
 
 	cv::Mat textonImage;
-	if (!TextonTools::convertToTextonImage(res_img_textons, textonImage)) {
+	if (!TextonTools::convertToTextonImage(res_img_textons, textons, textonImage)) {
 		printf("Error when converting to texton image\n");
 		exit(1);
 	}
 
+	cv::imwrite(textonPath, textonImage);
 
 	int scale = 5;
 
     /******************************************
      * test gradient calculation with CPU
      * ****************************************/
-	
-    PbDetector pbd(scale, imgLabComp[2]);
-	auto cpu_start = std::chrono::high_resolution_clock::now();
-    pbd.calculateGradients();
-	auto cpu_stop = std::chrono::high_resolution_clock::now();
-	auto cpu_duration = std::chrono::duration_cast<std::chrono::milliseconds>(cpu_stop - cpu_start);
-	printf("CPU runtime(ms) %d\n", int(cpu_duration.count()));
+	if (false) {
+		PbDetector pbd(scale, imgLabComp[2]);
+		auto cpu_start = std::chrono::high_resolution_clock::now();
+		pbd.calculateGradients();
+		auto cpu_stop = std::chrono::high_resolution_clock::now();
+		auto cpu_duration = std::chrono::duration_cast<std::chrono::milliseconds>(cpu_stop - cpu_start);
+		printf("CPU runtime(ms) %d\n", int(cpu_duration.count()));
 
-    cv::imwrite(cpu_grad0Path, pbd.getGradientImage(0));
-    cv::imwrite(cpu_grad1Path, pbd.getGradientImage(1));
-    cv::imwrite(cpu_grad2Path, pbd.getGradientImage(2));
-    cv::imwrite(cpu_grad3Path, pbd.getGradientImage(3));
+		cv::imwrite(cpu_grad0Path, pbd.getGradientImage(0));
+		cv::imwrite(cpu_grad1Path, pbd.getGradientImage(1));
+		cv::imwrite(cpu_grad2Path, pbd.getGradientImage(2));
+		cv::imwrite(cpu_grad3Path, pbd.getGradientImage(3));
+	}
 
 	/******************************************
 	* cudaMPb
