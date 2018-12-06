@@ -11,6 +11,9 @@
 #include "texton.h"
 #include "textontools.h"
 
+
+void calculateGradients(cv::Mat inputImg, std::string imgName, int scale);
+
 int main(int argc, char* argv[])
 {
     /*****************************
@@ -79,9 +82,12 @@ int main(int argc, char* argv[])
 	cv::cvtColor(resImg, imgLab, CV_BGR2Lab);
 	std::vector<cv::Mat> imgLabComp;
 	cv::split(imgLab, imgLabComp);
-	cv::imwrite(lCompPath, imgLabComp[2]);
-	cv::imwrite(aCompPath, imgLabComp[0]);
-	cv::imwrite(bCompPath, imgLabComp[1]);
+	cv::Mat lImage = imgLabComp[0];
+	cv::Mat aImage = imgLabComp[1];
+	cv::Mat bImage = imgLabComp[2];
+	cv::imwrite(lCompPath, lImage);
+	cv::imwrite(aCompPath, aImage);
+	cv::imwrite(bCompPath, bImage);
 	//qDebug() << "Saving L component" << lCompPath.c_str();
 
 	cv::Mat img_for_textons = cv::imread(sourcePath, cv::IMREAD_GRAYSCALE);
@@ -125,7 +131,22 @@ int main(int argc, char* argv[])
 	* cudaMPb
 	********************************************/
 
-	CudaMPb cudaImg(imgLabComp[2].data, imgLabComp[2].cols, imgLabComp[2].rows, scale);
+	calculateGradients(lImage, "LIMAGE", scale);
+	calculateGradients(aImage, "AIMAGE", scale);
+	calculateGradients(bImage, "BIMAGE", scale);
+	calculateGradients(textonImage, "TIMAGE", scale);
+
+	calculateGradients(lImage, "LIMAGE", 2 * scale);
+	calculateGradients(aImage, "AIMAGE", 2 * scale);
+	calculateGradients(bImage, "BIMAGE", 2 * scale);
+	calculateGradients(textonImage, "TIMAGE", 2 * scale);
+
+	return 0;
+}
+
+
+void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
+	CudaMPb cudaImg(inputImg.data, inputImg.cols, inputImg.rows, scale);
 	if (!cudaImg.wasSuccessfullyCreated()) {
 		printf("Error in constructor %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
@@ -138,13 +159,12 @@ int main(int argc, char* argv[])
 	auto cuda_stop = std::chrono::high_resolution_clock::now();
 	auto cuda_duration = std::chrono::duration_cast<std::chrono::milliseconds>(cuda_stop - cuda_start);
 	printf("GPU runtime(ms) %d\n", int(cuda_duration.count()));
-	cv::Mat cuda_grad0(imgLabComp[2].rows, imgLabComp[2].cols, CV_64FC1, cudaImg.getGradientImage(0));
-	cv::imwrite(cuda_grad0Path, cuda_grad0);
-	cv::Mat cuda_grad1(imgLabComp[2].rows, imgLabComp[2].cols, CV_64FC1, cudaImg.getGradientImage(1));
-	cv::imwrite(cuda_grad1Path, cuda_grad1);
-	cv::Mat cuda_grad2(imgLabComp[2].rows, imgLabComp[2].cols, CV_64FC1, cudaImg.getGradientImage(2));
-	cv::imwrite(cuda_grad2Path, cuda_grad2);
-	cv::Mat cuda_grad3(imgLabComp[2].rows, imgLabComp[2].cols, CV_64FC1, cudaImg.getGradientImage(3));
-	cv::imwrite(cuda_grad3Path, cuda_grad3);
-	return 0;
+	cv::Mat cuda_grad0(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(0));
+	cv::imwrite(imgName + "grad_0" + std::to_string(scale) + ".png", cuda_grad0);
+	cv::Mat cuda_grad1(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(1));
+	cv::imwrite(imgName + "grad_1" + std::to_string(scale) + ".png", cuda_grad1);
+	cv::Mat cuda_grad2(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(2));
+	cv::imwrite(imgName + "grad_2" + std::to_string(scale) + ".png", cuda_grad2);
+	cv::Mat cuda_grad3(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(3));
+	cv::imwrite(imgName + "grad_3" + std::to_string(scale) + ".png", cuda_grad3);
 }
