@@ -4,7 +4,7 @@
 #include <chrono>
 #include <string>
 
-#include "cudampb.h"
+#include "cudapbdetector.h"
 #include "discdirectmasks.h"
 #include "discinversemasks.h"
 #include "pbdetector.h"
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 
 
 void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
-	CudaMPb cudaImg(inputImg.data, inputImg.cols, inputImg.rows, scale);
+	CudaPbDetector cudaImg(inputImg.data, inputImg.cols, inputImg.rows, scale);
 	if (!cudaImg.wasSuccessfullyCreated()) {
 		printf("Error in constructor %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);

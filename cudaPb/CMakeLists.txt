@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(cudaMPb)
+project(cudaPb)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -8,15 +8,15 @@ include_directories(
      
 find_package(CUDA)
 
-cuda_add_library(cudaMPb
-  	cudampb.cu
-  	cudampb.h
+cuda_add_library(cudaPb
+  	cudapbdetector.cu
+  	cudapbdetector.h
 	cvector.h
 	cvector.cpp
 	STATIC
   )
 
-target_link_libraries(cudaMPb libCommon ${CUDA_LIBRARIES})
-target_compile_features(cudaMPb PUBLIC cxx_std_11)
+target_link_libraries(cudaPb libCommon ${CUDA_LIBRARIES})
+target_compile_features(cudaPb PUBLIC cxx_std_11)
  
  

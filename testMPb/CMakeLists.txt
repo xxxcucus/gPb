@@ -8,8 +8,8 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/masks/
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/textons/
-	${CMAKE_CURRENT_SOURCE_DIR}/../cudaMPb
-	${CMAKE_CURRENT_SOURCE_DIR}/../cpuMPb
+	${CMAKE_CURRENT_SOURCE_DIR}/../cudaPb
+	${CMAKE_CURRENT_SOURCE_DIR}/../cpuPb
 	${Qt5Core_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
 	${CUDA_INCLUDE_DIRS})
@@ -22,8 +22,8 @@ cuda_add_executable(testMPb ${TEST_MPB_SRCS})
 target_link_libraries(testMPb
 	libCommon
 	${OpenCV_LIBS}
-	cudaMPb
-	cpuMPb)
+	cudaPb
+	cpuPb)
 	
 qt5_use_modules(testMPb Core)
 install(TARGETS testMPb DESTINATION .)

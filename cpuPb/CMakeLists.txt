@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.10)
-project (cpuMPb)
+project (cpuPb)
 cmake_policy(SET CMP0020 NEW)
 
 include_directories(
@@ -14,9 +14,9 @@ set(MPB_SRCS
 set(MPB_HEADR
 	pbdetector.h)
 
-add_library(cpuMPb  STATIC ${MPB_SRCS} ${MPB_HEADR})
-target_link_libraries(cpuMPb
+add_library(cpuPb  STATIC ${MPB_SRCS} ${MPB_HEADR})
+target_link_libraries(cpuPb
 	libCommon
 	${OpenCV_LIBS})
 	
-install (FILES ${CMAKE_ROOT_DIR}/cpuMPb/Sternchen2016.jpg DESTINATION .)
+install (FILES ${CMAKE_ROOT_DIR}/cpuPb/Sternchen2016.jpg DESTINATION .)

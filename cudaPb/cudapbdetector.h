@@ -1,5 +1,5 @@
-#ifndef _CUDA_Image_
-#define _CUDA_Image_
+#ifndef _CUDA_PbDetector_
+#define _CUDA_PbDetector_
 
 #include "discinversemasks.h"
 #include <cuda.h>
@@ -9,10 +9,10 @@ __global__ void calculateGradients(int row, int row_count, double* dGradientImag
 __global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
 
-class CudaMPb {
+class CudaPbDetector {
 public:
-	CudaMPb(unsigned char* image_data, int image_width, int image_height, int scale);
-	~CudaMPb();
+	CudaPbDetector(unsigned char* image_data, int image_width, int image_height, int scale);
+	~CudaPbDetector();
 
 	bool wasSuccessfullyCreated() {
 		return m_FullyInitialized;

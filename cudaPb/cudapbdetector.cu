@@ -1,4 +1,4 @@
-#include "cudampb.h"
+#include "cudapbdetector.h"
 #include "cvector.h"
 #include <cstdlib>
 
@@ -79,7 +79,7 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 	}
 }
 
-CudaMPb::CudaMPb(unsigned char* image_data, int image_width, int image_height, int scale) :
+CudaPbDetector::CudaPbDetector(unsigned char* image_data, int image_width, int image_height, int scale) :
 	m_Width(image_width), m_Height(image_height), m_Scale(scale)
 {
 	if (!createGradientImages()) {
@@ -105,7 +105,7 @@ CudaMPb::CudaMPb(unsigned char* image_data, int image_width, int image_height, i
 	m_FullyInitialized = true;
 }
 
-bool CudaMPb::createGradientImages() 
+bool CudaPbDetector::createGradientImages()
 {
 	//allocate the device memory for the gradient images
 	m_LastCudaError = cudaMalloc(&m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double));
@@ -125,7 +125,7 @@ bool CudaMPb::createGradientImages()
 	return true;
 }
 
-bool CudaMPb::initializeHistoRange(int start, int stop)
+bool CudaPbDetector::initializeHistoRange(int start, int stop)
 {
 	for (int i = start; i < stop; ++i) {
 		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
@@ -145,7 +145,7 @@ bool CudaMPb::initializeHistoRange(int start, int stop)
 	return true;
 }
 
-bool CudaMPb::deleteFromHistoMaps(int step, int index) {
+bool CudaPbDetector::deleteFromHistoMaps(int step, int index) {
 
 	if (index + m_Scale + step + 1 < m_Height + 2 * m_Scale) {
 		if (!initializeHistoRange(index + m_Scale + step + 1, index + m_Scale + step + 2))
@@ -165,7 +165,7 @@ bool CudaMPb::deleteFromHistoMaps(int step, int index) {
 	return true;
 }
 
-bool CudaMPb::create2DHistoArray()
+bool CudaPbDetector::create2DHistoArray()
 {
 	//preparing histograms
 	m_LastCudaError = cudaMalloc((void**)&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
@@ -179,7 +179,7 @@ bool CudaMPb::create2DHistoArray()
 }
 
 //TODO: release of host memory
-CudaMPb::~CudaMPb()
+CudaPbDetector::~CudaPbDetector()
 {
 	cudaFree(m_dSourceImage);
 	cudaFree(m_dGradientImages);
@@ -200,7 +200,7 @@ CudaMPb::~CudaMPb()
 	cudaFree(m_dHalfDiscInfluencePoints);
 }
 
-bool CudaMPb::copyImageToGPU(unsigned char* image_data)
+bool CudaPbDetector::copyImageToGPU(unsigned char* image_data)
 {
 	//copy image to the device memory and pad with zeros
 	//TODO: for start pad with zeros, but later as in the CPU method
@@ -239,7 +239,7 @@ bool CudaMPb::copyImageToGPU(unsigned char* image_data)
  * Copies m_Masks->getHalfDiscInfluencePoints()
  * to the GPU
  */
-bool CudaMPb::initializeInfluencePoints() {
+bool CudaPbDetector::initializeInfluencePoints() {
 	m_Masks = new DiscInverseMasks(m_Scale);
 	std::vector<std::vector<int>> neighb = m_Masks->getHalfDiscInfluencePoints();
 
@@ -275,7 +275,7 @@ bool CudaMPb::initializeInfluencePoints() {
 	return true;	
 }
 
-bool CudaMPb::execute() {
+bool CudaPbDetector::execute() {
 	int noThreads = 256;
 	int step = 7;
 
