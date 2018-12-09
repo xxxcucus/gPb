@@ -25,6 +25,7 @@ add_subdirectory(Textons)
 add_subdirectory(common)
 add_subdirectory(cudaPb)
 add_subdirectory(testMPb)
+add_subdirectory(mPb)
 
 
 
