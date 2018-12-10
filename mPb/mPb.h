@@ -6,7 +6,7 @@
 #include <vector>
 
 class MultiscalePb {
-
+public:
 	/**
 	* img must be RGB image
 	*/
@@ -21,6 +21,10 @@ class MultiscalePb {
 	* Calculate the multiscale edges
 	*/
 	void computeEdges();
+
+	cv::Mat getEdges() {
+		return m_GradImage;
+	}
 
 private:
 	/**

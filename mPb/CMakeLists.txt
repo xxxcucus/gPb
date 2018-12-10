@@ -21,7 +21,7 @@ set(MPB_HEADR
 	mPb.h
 )
 
-cuda_add_library(mPb ${MPB_SRCS} ${MPB_HEADR} SHARED)
+cuda_add_library(mPb ${MPB_SRCS} ${MPB_HEADR} STATIC)
 target_link_libraries(mPb
 	libCommon
 	${OpenCV_LIBS}

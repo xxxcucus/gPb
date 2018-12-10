@@ -10,6 +10,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../common/textons/
 	${CMAKE_CURRENT_SOURCE_DIR}/../cudaPb
 	${CMAKE_CURRENT_SOURCE_DIR}/../cpuPb
+	${CMAKE_CURRENT_SOURCE_DIR}/../mPb
 	${Qt5Core_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
 	${CUDA_INCLUDE_DIRS})
@@ -23,7 +24,8 @@ target_link_libraries(testMPb
 	libCommon
 	${OpenCV_LIBS}
 	cudaPb
-	cpuPb)
+	cpuPb
+	mPb)
 	
 qt5_use_modules(testMPb Core)
 install(TARGETS testMPb DESTINATION .)

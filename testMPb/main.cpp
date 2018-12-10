@@ -10,6 +10,7 @@
 #include "pbdetector.h"
 #include "texton.h"
 #include "textontools.h"
+#include "mPb.h"
 
 
 void calculateGradients(cv::Mat inputImg, std::string imgName, int scale);
@@ -53,7 +54,7 @@ int main(int argc, char* argv[])
 	* setting paths
 	* ****************************************/
 
-	std::string sourcePath = "Sternchen2016.jpg";
+	/*std::string sourcePath = "Sternchen2016.jpg";
 	std::string cuda_grad0Path = "cuda_grad0.png";
 	std::string cuda_grad1Path = "cuda_grad1.png";
 	std::string cuda_grad2Path = "cuda_grad2.png";
@@ -67,13 +68,13 @@ int main(int argc, char* argv[])
 	std::string cpu_grad0Path = "cpu_grad0.png";
 	std::string cpu_grad1Path = "cpu_grad1.png";
 	std::string cpu_grad2Path = "cpu_grad2.png";
-	std::string cpu_grad3Path = "cpu_grad3.png";
+	std::string cpu_grad3Path = "cpu_grad3.png";*/
 
 	/******************************************
 	* resize, convert to Lab and extract L component
 	* ****************************************/
 
-	cv::Mat img = cv::imread(sourcePath);
+	/*cv::Mat img = cv::imread(sourcePath);
 	int nRows = img.rows / 3;
 	int nCols = img.cols / 3;
 	cv::Mat resImg;
@@ -108,12 +109,12 @@ int main(int argc, char* argv[])
 
 	cv::imwrite(textonPath, textonImage);
 
-	int scale = 5;
+	int scale = 5;*/
 
     /******************************************
      * test gradient calculation with CPU
      * ****************************************/
-	if (false) {
+	/*if (false) {
 		PbDetector pbd(scale, imgLabComp[2]);
 		auto cpu_start = std::chrono::high_resolution_clock::now();
 		pbd.calculateGradients();
@@ -125,13 +126,13 @@ int main(int argc, char* argv[])
 		cv::imwrite(cpu_grad1Path, pbd.getGradientImage(1));
 		cv::imwrite(cpu_grad2Path, pbd.getGradientImage(2));
 		cv::imwrite(cpu_grad3Path, pbd.getGradientImage(3));
-	}
+	}*/
 
 	/******************************************
 	* cudaMPb
 	********************************************/
 
-	calculateGradients(lImage, "LIMAGE", scale);
+	/*calculateGradients(lImage, "LIMAGE", scale);
 	calculateGradients(aImage, "AIMAGE", scale);
 	calculateGradients(bImage, "BIMAGE", scale);
 	calculateGradients(textonImage, "TIMAGE", scale);
@@ -139,7 +140,31 @@ int main(int argc, char* argv[])
 	calculateGradients(lImage, "LIMAGE", 2 * scale);
 	calculateGradients(aImage, "AIMAGE", 2 * scale);
 	calculateGradients(bImage, "BIMAGE", 2 * scale);
-	calculateGradients(textonImage, "TIMAGE", 2 * scale);
+	calculateGradients(textonImage, "TIMAGE", 2 * scale);*/
+
+	/******************************************
+	* MPb detector
+	********************************************/
+
+	std::string sourcePath = "Sternchen2016.jpg";
+	cv::Mat img = cv::imread(sourcePath);
+	int nRows = img.rows / 3;
+	int nCols = img.cols / 3;
+	cv::Mat resImg;
+	cv::resize(img, resImg, cv::Size(nCols, nRows));
+
+	std::map<std::string, std::vector<int>> mapScales;
+	std::vector<int> scales = { 3, 5, 7 };
+	mapScales["l"] = scales;
+	mapScales["a"] = scales;
+	mapScales["b"] = scales;
+	mapScales["t"] = scales;
+
+	MultiscalePb detector(resImg, "textons.txt", mapScales);
+	detector.computeGradients();
+	detector.computeEdges();
+	cv::Mat edges = detector.getEdges();
+	cv::imwrite("edges.png", edges);
 
 	return 0;
 }

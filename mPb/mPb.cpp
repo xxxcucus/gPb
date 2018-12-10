@@ -13,11 +13,9 @@ MultiscalePb::MultiscalePb(cv::Mat img, const std::string& textonsPath, const st
 }
 
 bool MultiscalePb::computeGradients() {
-
 	for (auto comp : m_ComponentNames) {
 		calculateGradientImage(comp);
 	}
-
 	return true;
 }
 
@@ -36,8 +34,11 @@ void MultiscalePb::calculateComponentImages() {
 		exit(1);
 	}
 
+	cv::Mat grayscaleImage;
+	cv::cvtColor(m_OrigImage, grayscaleImage, CV_BGR2GRAY);
+
 	cv::Mat textonImage;
-	if (!TextonTools::convertToTextonImage(m_OrigImage, textons, textonImage)) {
+	if (!TextonTools::convertToTextonImage(grayscaleImage, textons, textonImage)) {
 		printf("Error when converting to texton image\n");
 		exit(1);
 	}
@@ -67,11 +68,9 @@ void MultiscalePb::calculateGradientImage(const std::string& compName) {
 }
 
 std::vector<cv::Mat> MultiscalePb::calculateGradientImage(const std::string& compName, int sIndex) {
-	
 	//TODO: error checking
 	int scale = m_Scales[compName][sIndex];
 	cv::Mat inputImg = m_ComponentImages[compName];
-
 
 	printf("Calculate gradient images for %s component\n", compName.c_str());
 	CudaPbDetector cudaImg(inputImg.data, inputImg.cols, inputImg.rows, scale);
@@ -92,16 +91,16 @@ std::vector<cv::Mat> MultiscalePb::calculateGradientImage(const std::string& com
 
 	cv::Mat cuda_grad0(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(0));
 	retVal.push_back(cuda_grad0.clone());
-	//cv::imwrite(imgName + "grad_0" + std::to_string(scale) + ".png", cuda_grad0);
+	cv::imwrite(compName + "_grad_0_" + std::to_string(scale) + ".png", cuda_grad0);
 	cv::Mat cuda_grad1(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(1));
 	retVal.push_back(cuda_grad1.clone());
-	//cv::imwrite(imgName + "grad_1" + std::to_string(scale) + ".png", cuda_grad1);
+	cv::imwrite(compName + "_grad_1_" + std::to_string(scale) + ".png", cuda_grad1);
 	cv::Mat cuda_grad2(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(2));
 	retVal.push_back(cuda_grad2.clone());
-	//cv::imwrite(imgName + "grad_2" + std::to_string(scale) + ".png", cuda_grad2);
+	cv::imwrite(compName + "_grad_2_" + std::to_string(scale) + ".png", cuda_grad2);
 	cv::Mat cuda_grad3(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(3));
 	retVal.push_back(cuda_grad3.clone());
-	//cv::imwrite(imgName + "grad_3" + std::to_string(scale) + ".png", cuda_grad3);
+	cv::imwrite(compName + "_grad_3_" + std::to_string(scale) + ".png", cuda_grad3);
 
 	return retVal;
 }
@@ -119,7 +118,7 @@ void MultiscalePb::initializeAlphas() {
 	double val = 1.0 / (double)count;
 
 	for (auto compName : m_ComponentNames) {
-		std::vector<double> vScales(val, m_Scales[compName].size());
+		std::vector<double> vScales(m_Scales[compName].size(), val);
 		std::vector<std::vector<double>> vScalesOrient;
 		for (auto orient : m_Orientations) {
 			vScalesOrient.push_back(vScales);
@@ -129,9 +128,9 @@ void MultiscalePb::initializeAlphas() {
 }
 
 void MultiscalePb::computeEdges() {
-
+	printf("BlaBla1\n");
 	std::vector<cv::Mat> orientGradientImages;
-
+	printf("BlaBla2\n");
 	for (unsigned int o = 0; o < m_Orientations.size(); ++o) {
 		cv::Mat sumGrad = cv::Mat::zeros(m_OrigImage.size(), CV_64FC1);
 
@@ -139,12 +138,11 @@ void MultiscalePb::computeEdges() {
 			for (unsigned int s = 0; s < m_Scales[compName].size(); ++s)
 				cv::add(sumGrad, m_Alphas[compName][o][s] * m_GradientImages[compName][o][s], sumGrad);
 		}
-
 		orientGradientImages.push_back(sumGrad);
 	}
-
+	printf("BlaBla3\n");
 	cv::Mat maxImage = cv::Mat::zeros(m_OrigImage.size(), CV_64FC1);
-
+	printf("BlaBla4\n");
 	for (int i = 0; i < m_OrigImage.rows; ++i) {
 		for (int j = 0; j < m_OrigImage.cols; ++j) {
 			double max = -1000000.9;
@@ -156,6 +154,7 @@ void MultiscalePb::computeEdges() {
 			maxImage.at<double>(i, j) = max;
 		}
 	}
-
+	printf("BlaBla5\n");
 	cv::normalize(maxImage, m_GradImage, 0, 255, cv::NORM_MINMAX);
+	printf("BlaBla6\n");
 }
