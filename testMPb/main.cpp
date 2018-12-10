@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
 	detector.computeEdges();
 	cv::Mat edges = detector.getEdges();
 	cv::imwrite("edges.png", edges);
-
+	
 	return 0;
 }
 

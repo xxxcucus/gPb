@@ -47,6 +47,7 @@ private:
 	*/
 	void calculateGradientImage(const std::string& compName);
 
+	cv::Mat nonMaximumSuppression(const std::vector<cv::Mat> orientImgs, cv::Mat maxImage);
 
 private:
 

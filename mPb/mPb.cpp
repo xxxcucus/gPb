@@ -155,6 +155,82 @@ void MultiscalePb::computeEdges() {
 		}
 	}
 	printf("BlaBla5\n");
-	cv::normalize(maxImage, m_GradImage, 0, 255, cv::NORM_MINMAX);
+	
+	cv::Mat nonMaxSup = nonMaximumSuppression(orientGradientImages, maxImage);
+	cv::normalize(nonMaxSup, m_GradImage, 0, 255, cv::NORM_MINMAX);
 	printf("BlaBla6\n");
+}
+
+cv::Mat MultiscalePb::nonMaximumSuppression(const std::vector<cv::Mat> orientImgs, cv::Mat maxImage) {
+	cv::Mat finalImage = cv::Mat::zeros(m_OrigImage.size(), CV_64FC1);
+
+	for (int i = 0; i < m_OrigImage.rows; ++i) {
+		for (int j = 0; j < m_OrigImage.cols; ++j) {
+			int maxOrient = 0;
+			double max = -10000000.0;
+			for (unsigned int o = 0; o < m_Orientations.size(); ++o) {
+				double val = orientImgs[o].at<double>(i, j);
+				if (val > max) {
+					max = val;
+					maxOrient = o;
+				}
+			}
+
+			if (maxOrient == 2) {
+				//horizontal edge
+				if (i == 0 || i == m_OrigImage.rows - 1) {
+					finalImage.at<double>(i, j) = 0;
+				} else {
+					double val1 = maxImage.at<double>(i - 1, j);
+					double val2 = maxImage.at<double>(i + 1, j);
+					if (max >= val1 && max >= val2)
+						finalImage.at<double>(i, j) = max;
+					else
+						finalImage.at<double>(i, j) = 0;
+				}
+			}
+
+			if (maxOrient == 3) {
+				if (i == 0 || j == m_OrigImage.cols - 1 || i == m_OrigImage.rows - 1 || j == 0) {
+					finalImage.at<double>(i, j) = 0;
+				} else {
+					double val1 = maxImage.at<double>(i - 1, j + 1);
+					double val2 = maxImage.at<double>(i + 1, j - 1);
+					if (max >= val1 && max >= val2)
+						finalImage.at<double>(i, j) = max;
+					else
+						finalImage.at<double>(i, j) = 0;
+				}
+			}
+
+			if (maxOrient == 0) {
+				if (j == 0 || j == m_OrigImage.cols - 1) {
+					finalImage.at<double>(i, j) = 0;
+				} else {
+					double val1 = maxImage.at<double>(i , j + 1);
+					double val2 = maxImage.at<double>(i , j - 1);
+					if (max >= val1 && max >= val2)
+						finalImage.at<double>(i, j) = max;
+					else
+						finalImage.at<double>(i, j) = 0;
+				}
+			}
+
+			if (maxOrient == 1) {
+				if (i == 0 || j == m_OrigImage.cols - 1 || i == m_OrigImage.rows - 1 || j == 0) {
+					finalImage.at<double>(i, j) = 0;
+				}
+				else {
+					double val1 = maxImage.at<double>(i - 1, j - 1);
+					double val2 = maxImage.at<double>(i + 1, j + 1);
+					if (max >= val1 && max >= val2)
+						finalImage.at<double>(i, j) = max;
+					else
+						finalImage.at<double>(i, j) = 0;
+				}
+			}
+		} // for j
+	} // for i
+
+	return finalImage;
 }
