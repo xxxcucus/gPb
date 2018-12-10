@@ -10,23 +10,44 @@ class MultiscalePb {
 	/**
 	* img must be RGB image
 	*/
-	MultiscalePb(cv::Mat img, const std::string& textonPath);
-
-	void setScales(const std::string& comp, const std::vector<int>& scales) {
-		m_Scales[comp] = scales;
-	}
+	MultiscalePb(cv::Mat img, const std::string& textonPath, const std::map<std::string, std::vector<int>>& scales);
 
 	/**
 	* Computes the gradient images for all scales, orientations, and components
 	*/
 	bool computeGradients();
 
+	/**
+	* Calculate the multiscale edges
+	*/
+	void computeEdges();
+
 private:
+	/**
+	* Initialize alphas with equal values.
+	*/
+	void initializeAlphas();
+	/**
+	* Calculate L, a, b components from Lab conversion of image
+	* and texton image corresponding to the quantized textons
+	*/
 	void calculateComponentImages();
+	/**
+	* Calculate gradient images for component with name compName
+	* at the scale with index sIndex in m_Scales[compName].
+	* One gradient image per orientation will be computed.
+	*/
+	std::vector<cv::Mat> calculateGradientImage(const std::string& compName, int sIndex);
+	/**
+	* Calculate gradient images for component with name compName.
+	*/
+	void calculateGradientImage(const std::string& compName);
+
 
 private:
 
 	cv::Mat m_OrigImage;
+	cv::Mat m_GradImage;
 
 	/**
 	* Path to quantized textons.

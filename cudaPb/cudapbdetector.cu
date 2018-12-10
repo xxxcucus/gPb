@@ -178,7 +178,7 @@ bool CudaPbDetector::create2DHistoArray()
 	return true;
 }
 
-//TODO: release of host memory
+//TODO: to check this
 CudaPbDetector::~CudaPbDetector()
 {
 	cudaFree(m_dSourceImage);

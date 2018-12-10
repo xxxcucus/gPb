@@ -2,13 +2,21 @@
 
 #include "texton.h"
 #include "textontools.h"
+#include "cudapbdetector.h"
 
-MultiscalePb::MultiscalePb(cv::Mat img, const std::string& textonsPath): 
-	m_OrigImage(img), m_TextonPath(textonsPath) {
+#include <chrono>
+
+MultiscalePb::MultiscalePb(cv::Mat img, const std::string& textonsPath, const std::map<std::string, std::vector<int>>& scales):
+	m_OrigImage(img), m_TextonPath(textonsPath), m_Scales(scales) {
 	calculateComponentImages();
+	initializeAlphas();
 }
 
 bool MultiscalePb::computeGradients() {
+
+	for (auto comp : m_ComponentNames) {
+		calculateGradientImage(comp);
+	}
 
 	return true;
 }
@@ -38,4 +46,116 @@ void MultiscalePb::calculateComponentImages() {
 	m_ComponentImages["b"] = bImage;
 	m_ComponentImages["l"] = lImage;
 	m_ComponentImages["t"] = textonImage;
+}
+
+
+void MultiscalePb::calculateGradientImage(const std::string& compName) {
+	std::vector<std::vector<cv::Mat>> images;
+
+	for (auto orient : m_Orientations) {
+		images.push_back(std::vector<cv::Mat>());
+	}
+
+	for (unsigned int i = 0; i < m_Scales[compName].size(); ++i) {
+		std::vector<cv::Mat> orientImgs = calculateGradientImage(compName, i);
+		for (unsigned int j = 0; j < orientImgs.size(); ++j) {
+			images[j].push_back(orientImgs[j]);
+		}
+	}
+
+	m_GradientImages[compName] = images;
+}
+
+std::vector<cv::Mat> MultiscalePb::calculateGradientImage(const std::string& compName, int sIndex) {
+	
+	//TODO: error checking
+	int scale = m_Scales[compName][sIndex];
+	cv::Mat inputImg = m_ComponentImages[compName];
+
+
+	printf("Calculate gradient images for %s component\n", compName.c_str());
+	CudaPbDetector cudaImg(inputImg.data, inputImg.cols, inputImg.rows, scale);
+	if (!cudaImg.wasSuccessfullyCreated()) {
+		printf("Error in constructor %s. Exiting\n", cudaImg.getErrorString());
+		exit(1);
+	}
+	auto cuda_start = std::chrono::high_resolution_clock::now();
+	if (!cudaImg.execute()) {
+		printf("Error when executing %s. Exiting\n", cudaImg.getErrorString());
+		exit(1);
+	}
+	auto cuda_stop = std::chrono::high_resolution_clock::now();
+	auto cuda_duration = std::chrono::duration_cast<std::chrono::milliseconds>(cuda_stop - cuda_start);
+	printf("GPU runtime(ms) %d\n", int(cuda_duration.count()));
+
+	std::vector<cv::Mat> retVal;
+
+	cv::Mat cuda_grad0(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(0));
+	retVal.push_back(cuda_grad0.clone());
+	//cv::imwrite(imgName + "grad_0" + std::to_string(scale) + ".png", cuda_grad0);
+	cv::Mat cuda_grad1(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(1));
+	retVal.push_back(cuda_grad1.clone());
+	//cv::imwrite(imgName + "grad_1" + std::to_string(scale) + ".png", cuda_grad1);
+	cv::Mat cuda_grad2(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(2));
+	retVal.push_back(cuda_grad2.clone());
+	//cv::imwrite(imgName + "grad_2" + std::to_string(scale) + ".png", cuda_grad2);
+	cv::Mat cuda_grad3(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(3));
+	retVal.push_back(cuda_grad3.clone());
+	//cv::imwrite(imgName + "grad_3" + std::to_string(scale) + ".png", cuda_grad3);
+
+	return retVal;
+}
+
+//TODO: consistency check 
+void MultiscalePb::initializeAlphas() {
+	int count = 0;
+	for (auto compName : m_ComponentNames) {
+		count += int(m_Orientations.size() * m_Scales[compName].size());
+	}
+
+	if (!count)
+		return;
+
+	double val = 1.0 / (double)count;
+
+	for (auto compName : m_ComponentNames) {
+		std::vector<double> vScales(val, m_Scales[compName].size());
+		std::vector<std::vector<double>> vScalesOrient;
+		for (auto orient : m_Orientations) {
+			vScalesOrient.push_back(vScales);
+		}
+		m_Alphas[compName] = vScalesOrient;
+	}
+}
+
+void MultiscalePb::computeEdges() {
+
+	std::vector<cv::Mat> orientGradientImages;
+
+	for (unsigned int o = 0; o < m_Orientations.size(); ++o) {
+		cv::Mat sumGrad = cv::Mat::zeros(m_OrigImage.size(), CV_64FC1);
+
+		for (auto compName : m_ComponentNames) {
+			for (unsigned int s = 0; s < m_Scales[compName].size(); ++s)
+				cv::add(sumGrad, m_Alphas[compName][o][s] * m_GradientImages[compName][o][s], sumGrad);
+		}
+
+		orientGradientImages.push_back(sumGrad);
+	}
+
+	cv::Mat maxImage = cv::Mat::zeros(m_OrigImage.size(), CV_64FC1);
+
+	for (int i = 0; i < m_OrigImage.rows; ++i) {
+		for (int j = 0; j < m_OrigImage.cols; ++j) {
+			double max = -1000000.9;
+			for (unsigned int o = 0; o < m_Orientations.size(); ++o) {
+				double val = orientGradientImages[o].at<double>(i, j);
+				if (val > max)
+					max = val;
+			}
+			maxImage.at<double>(i, j) = max;
+		}
+	}
+
+	cv::normalize(maxImage, m_GradImage, 0, 255, cv::NORM_MINMAX);
 }
