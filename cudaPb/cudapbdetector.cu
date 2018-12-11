@@ -128,20 +128,20 @@ bool CudaPbDetector::createGradientImages()
 bool CudaPbDetector::initializeHistoRange(int start, int stop)
 {
 	for (int i = start; i < stop; ++i) {
-		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i], 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
+		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i],   256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
 		//printf("Alloc %d\n", i);
 		if (m_LastCudaError != cudaSuccess) {
 			printf("cudaMalloc error 1: %d\n", i);
 			return false;
 		}
-
-		cudaMemcpy(m_dHistograms, m_hHistograms, stop * sizeof(unsigned int*), cudaMemcpyHostToDevice);
-		if (m_LastCudaError != cudaSuccess) {
-			printf("cudaMemcpy error 1\n");
-			return false;
-		}
 	}
 
+	cudaMemcpy(m_dHistograms + start, m_hHistograms + start, (stop - start) * sizeof(unsigned int*), cudaMemcpyHostToDevice);
+	if (m_LastCudaError != cudaSuccess) {
+		printf("cudaMemcpy error 1\n");
+		return false;
+	}
+	
 	return true;
 }
 

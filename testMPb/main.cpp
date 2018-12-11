@@ -161,7 +161,11 @@ int main(int argc, char* argv[])
 	mapScales["t"] = scales;
 
 	MultiscalePb detector(resImg, "textons.txt", mapScales);
+	auto grad_start = std::chrono::high_resolution_clock::now();
 	detector.computeGradients();
+	auto grad_stop = std::chrono::high_resolution_clock::now();
+	auto grad_duration = std::chrono::duration_cast<std::chrono::milliseconds>(grad_stop - grad_start);
+	printf("Multiscale gradients runtime(ms) %d\n", int(grad_duration.count()));
 	detector.computeEdges();
 	cv::Mat edges = detector.getEdges();
 	cv::imwrite("edges.png", edges);
