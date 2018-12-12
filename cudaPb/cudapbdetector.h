@@ -96,6 +96,12 @@ private:
 	//the half disc masks around a center point
     DiscInverseMasks* m_Masks = nullptr;
 
+	int m_TopAllocated = 0;
+	int m_BottomAllocated = 0;
+
+	int m_NoThreads = 256;
+	int m_Step = 7;
+
 };
 
 

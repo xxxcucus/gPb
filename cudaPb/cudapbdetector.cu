@@ -276,8 +276,7 @@ bool CudaPbDetector::initializeInfluencePoints() {
 }
 
 bool CudaPbDetector::execute() {
-	int noThreads = 256;
-	int step = 7;
+
 
 	cudaStream_t stream1;
 	cudaStream_t stream2;
@@ -287,7 +286,7 @@ bool CudaPbDetector::execute() {
 
 	if (!initializeHistoRange(0, m_Scale + 1))
 		return false;
-	int noSteps = (m_Height + 2 * m_Scale + step - 1) / step;
+
 
 	/*for (int i = 0; i < noSteps; ++i) {
 		int row_start = step * i;
@@ -303,16 +302,16 @@ bool CudaPbDetector::execute() {
 		}	
 	}*/
 	
-	int top_allocated = m_Scale + 1;
-	int bottom_allocated = 0;
+	m_TopAllocated = m_Scale + 1;
+	m_BottomAllocated = 0;
 
 	//new loop
-	while (top_allocated < m_Height + 2 * m_Scale) {
-		int row_start = top_allocated;
-		int row_count = std::min(step, m_Height + 2 * m_Scale - top_allocated);
+	while (m_TopAllocated < m_Height + 2 * m_Scale) {
+		int row_start = m_TopAllocated;
+		int row_count = std::min(m_Step, m_Height + 2 * m_Scale - m_TopAllocated);
 		//printf("Row_start: %d Row_count %d \n", row_start, row_count);
 		
-		int new_top_allocated = top_allocated;
+		int new_top_allocated = m_TopAllocated;
 		bool allocate_failed = false;
 
 		for (int k = row_start; k < row_count + row_start; ++k) {
@@ -322,7 +321,7 @@ bool CudaPbDetector::execute() {
 				}
 				else {
 					allocate_failed = true;
-					row_count = new_top_allocated - top_allocated;
+					row_count = new_top_allocated - m_TopAllocated;
 					break;
 				}
 			}
@@ -330,7 +329,7 @@ bool CudaPbDetector::execute() {
 
 		calcHisto << <row_count, noThreads, 0, stream1 >> > (row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		//synchronize in stream
-		cudaDeviceSynchronize();
+		//cudaDeviceSynchronize();
 
 
 		else {
@@ -351,16 +350,16 @@ bool CudaPbDetector::execute() {
 
 void CudaPbDetector::producerThread() {
 
-	int top_allocated = m_Scale + 1;
-	int bottom_allocated = 0;
+	m_TopAllocated = m_Scale + 1;
+	m_BottomAllocated = 0;
 
 	//new loop
-	while (top_allocated < m_Height + 2 * m_Scale) {
-		int row_start = top_allocated;
-		int row_count = std::min(step, m_Height + 2 * m_Scale - top_allocated);
+	while (m_TopAllocated < m_Height + 2 * m_Scale) {
+		int row_start = m_TopAllocated;
+		int row_count = std::min(m_Step, m_Height + 2 * m_Scale - m_TopAllocated);
 		//printf("Row_start: %d Row_count %d \n", row_start, row_count);
 
-		int new_top_allocated = top_allocated;
+		int new_top_allocated = m_TopAllocated;
 		bool allocate_failed = false;
 
 		for (int k = row_start; k < row_count + row_start; ++k) {
@@ -370,17 +369,29 @@ void CudaPbDetector::producerThread() {
 				}
 				else {
 					allocate_failed = true;
-					row_count = new_top_allocated - top_allocated;
+					row_count = new_top_allocated - m_TopAllocated;
 					break;
 				}
 			}
 		}
 
 		calcHisto << <row_count, noThreads, 0, stream1 >> > (row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
-
-
+		//synchronize in stream
+		//cudaDeviceSynchronize();
+	}
 }
 
 void CudaPbDetector::consumerThread() {
+	while (m_BottomAllocated < m_Height + 2 * m_Scale) {
+		if (m_BottomAllocated > m_TopAllocated)
+			continue;
+	}
+
+	calculateGradients << <row_count, noThreads >> > (row_start, row_count, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+	cudaDeviceSynchronize();
+	for (int k = row_start; k < row_count + row_start; ++k) {
+		if (!deleteFromHistoMaps(step, k))
+			return false;
+	}
 
 }
