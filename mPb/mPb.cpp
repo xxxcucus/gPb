@@ -79,7 +79,7 @@ std::vector<cv::Mat> MultiscalePb::calculateGradientImage(const std::string& com
 		exit(1);
 	}
 	auto cuda_start = std::chrono::high_resolution_clock::now();
-	if (!cudaImg.execute()) {
+	if (!cudaImg.executeStreaming()) {
 		printf("Error when executing %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
 	}

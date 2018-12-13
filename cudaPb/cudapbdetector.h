@@ -4,6 +4,7 @@
 #include "discinversemasks.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <mutex>
 
 __global__ void calculateGradients(int row, int row_count, double* dGradientImages, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
 __global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
@@ -22,7 +23,7 @@ public:
 		return cudaGetErrorString(m_LastCudaError);
 	}
 
-	bool execute();
+	bool executeStreaming();
 
 	/**
 	* returns the gradient image corresponding to the index arc
@@ -61,7 +62,7 @@ private:
 	* such that memory is used efficiently
 	* @param index
 	*/
-	bool deleteFromHistoMaps(int step, int index);
+	bool deleteFromHistoMaps(int index);
 
     /**
      * Copies m_Masks->getHalfDiscInfluencePoints()
@@ -99,8 +100,15 @@ private:
 	int m_TopAllocated = 0;
 	int m_BottomAllocated = 0;
 
-	int m_NoThreads = 256;
-	int m_Step = 7;
+	int m_NoThreads = 128;
+	int m_Step = 16;
+
+
+	cudaStream_t m_Stream1_2;
+	cudaStream_t m_Stream1_1;
+	cudaStream_t m_Stream1_3;
+	cudaStream_t m_Stream2;
+	std::mutex m_HistoMutex;
 
 };
 

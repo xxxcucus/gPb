@@ -8,6 +8,6 @@
 8. Pass parameters by reference in kernel
 9. GUI, where an image can be selected and mPb can run on it. 
 Options: folders for texture training, Kernel parameters as options, alpha optimization with training
-10. Streaming 
+10. Streaming . Pinned memory.
 11. Masks in shared memory. Determine dynamically if there is enough place for them.
 12. Automatic kernel parameter computation.

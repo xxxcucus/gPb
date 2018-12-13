@@ -12,7 +12,6 @@
 #include "textontools.h"
 #include "mPb.h"
 
-
 void calculateGradients(cv::Mat inputImg, std::string imgName, int scale);
 
 int main(int argc, char* argv[])
@@ -173,7 +172,6 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-
 void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
 	CudaPbDetector cudaImg(inputImg.data, inputImg.cols, inputImg.rows, scale);
 	if (!cudaImg.wasSuccessfullyCreated()) {
@@ -181,7 +179,7 @@ void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
 		exit(1);
 	}
 	auto cuda_start = std::chrono::high_resolution_clock::now();
-	if (!cudaImg.execute()) {
+	if (!cudaImg.executeStreaming()) {
 		printf("Error when executing %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
 	}
