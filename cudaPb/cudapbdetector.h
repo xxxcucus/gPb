@@ -22,7 +22,7 @@ public:
 		return cudaGetErrorString(m_LastCudaError);
 	}
 
-	bool execute();
+	bool executeChunk();
 
 	/**
 	* returns the gradient image corresponding to the index arc
@@ -94,6 +94,8 @@ private:
 
 	//the half disc masks around a center point
     DiscInverseMasks* m_Masks = nullptr;
+
+	const int m_HistoCellSize = 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int);
 
 };
 

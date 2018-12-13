@@ -275,7 +275,25 @@ bool CudaPbDetector::initializeInfluencePoints() {
 	return true;	
 }
 
-bool CudaPbDetector::execute() {
+bool CudaPbDetector::executeChunk() {
+	//find how much memory is available
+	int total = 0;
+	int free = 0;
+	m_LastCudaError =  cudaMemGetInfo((size_t*)&free, (size_t*)&total);
+
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+	
+	int noHistoChunks = free / 2 / m_HistoCellSize;
+
+	unsigned int* hMem = nullptr;
+	m_LastCudaError = cudaMalloc((void**)&hMem, noHistoChunks * m_HistoCellSize);
+
+	if (m_LastCudaError != cudaSuccess) {
+		return false;
+	}
+
+
 	int noThreads = 256;
 	int step = 7;
 
