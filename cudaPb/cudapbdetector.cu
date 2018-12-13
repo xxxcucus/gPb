@@ -105,7 +105,8 @@ CudaPbDetector::CudaPbDetector(unsigned char* image_data, int image_width, int i
 
 	cudaStreamCreate(&m_Stream1_2);
 	cudaStreamCreate(&m_Stream1_1);
-	cudaStreamCreate(&m_Stream2);
+	cudaStreamCreateWithFlags(&m_Stream2_1, cudaStreamNonBlocking);
+	cudaStreamCreateWithFlags(&m_Stream2_2, cudaStreamNonBlocking);
 
 	m_FullyInitialized = true;
 }
@@ -202,7 +203,8 @@ CudaPbDetector::~CudaPbDetector()
 
 	cudaStreamDestroy(m_Stream1_2);
 	cudaStreamDestroy(m_Stream1_1);
-	cudaStreamDestroy(m_Stream2);
+	cudaStreamDestroy(m_Stream2_1);
+	cudaStreamDestroy(m_Stream2_1);
 }
 
 bool CudaPbDetector::copyImageToGPU(unsigned char* image_data)
@@ -360,9 +362,11 @@ void CudaPbDetector::consumerThread() {
 		int row_start = m_BottomAllocated;
 		int row_count = std::min(m_Step, m_TopAllocated - m_BottomAllocated);
 
-		calculateGradients <<<row_count, m_NoThreads, 0, m_Stream2>>> (row_start, row_count, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calculateGradients <<<row_count / 2, m_NoThreads, 0, m_Stream2_1>>> (row_start, row_count / 2, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calculateGradients << <row_count / 2, m_NoThreads, 0, m_Stream2_2 >> > (row_start + row_count / 2, row_count / 2, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
 		//synchronize in stream
-		cudaStreamSynchronize(m_Stream2);
+		cudaStreamSynchronize(m_Stream2_1);
+		cudaStreamSynchronize(m_Stream2_2);
 
 		//m_HistoMutex.lock();
 		for (int k = row_start; k < row_count + row_start; ++k) {

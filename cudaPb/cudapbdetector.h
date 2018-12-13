@@ -101,13 +101,13 @@ private:
 	int m_BottomAllocated = 0;
 
 	int m_NoThreads = 128;
-	int m_Step = 16;
+	int m_Step = 128;
 
 
 	cudaStream_t m_Stream1_2;
 	cudaStream_t m_Stream1_1;
-	cudaStream_t m_Stream1_3;
-	cudaStream_t m_Stream2;
+	cudaStream_t m_Stream2_2;
+	cudaStream_t m_Stream2_1;
 	std::mutex m_HistoMutex;
 
 };
