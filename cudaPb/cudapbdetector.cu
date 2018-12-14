@@ -3,7 +3,7 @@
 #include <cstdlib>
 
 
-__global__ void calculateGradients(int row_start, int row_count, double* dGradientImages, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno) {
+__global__ void calculateGradients(int row_start, int row_count, double* dGradientImages, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno) {
 	int row = row_start + blockIdx.x;
 	int index = threadIdx.x;
 	int stride = blockDim.x;
@@ -12,7 +12,12 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 		return;
 
 	for (int j = scale + index; j < image_width + scale; j += stride) {
-		unsigned int* vHist = dHistograms[row - scale] +  j * 2 * arcno * 256;
+		//unsigned int* vHist = dHistograms[row - scale] +  j * 2 * arcno * 256;
+		unsigned int* vHist = getHistoPointer(row - scale, j, dChunk1, dChunk2, bottomChunk, topChunk, image_width, scale, arcno);
+		
+		//todo: error handling
+		if (vHist == nullptr)
+			return;
 
 		for (int i = 0; i < arcno; ++i) {
 			unsigned int* histo1 = vHist + i * 256;
@@ -35,7 +40,7 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 	}
 }
 
-__global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno)
+__global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno)
 {
 	int index = threadIdx.x;
 	int stride = blockDim.x;
@@ -49,11 +54,11 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];
 		//printf("Index %d Val %d \n", j, int(val));
 		//with the point (i,j) with value val, update all histograms which contain this data point
-		addToHistoArray(dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, image_width, image_height, scale, arcno, val, i, j);
+		addToHistoArray(dHalfDiscInfluencePoints, totalHalfInfluencePoints, dChunk1, dChunk2, bottomChunk, topChunk, image_width, image_height, scale, arcno, val, i, j);
 	}
 }
 
-__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j)
+__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
 	for (int k = 0; k < totalHalfInfluencePoints; ++k) {
 		struct CVector n = dHalfDiscInfluencePoints[k];
@@ -68,7 +73,11 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 			exit(1);
 		}*/
 
-		unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
+		//unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
+		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, n.m_Data[1] + j, dChunk1, dChunk2, bottomChunk, topChunk, image_width, scale, arcno);
+		//todo: error handling
+		if (vHist == nullptr)
+			return;
 		for (unsigned int l = 2; l < n.m_Size; ++l) {
 			if (n.m_Data[l] > 2 * arcno)
 				continue;
@@ -78,6 +87,21 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		}
 	}
 }
+
+__device__ unsigned int* getHistoPointer(int row, int col, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int width, int scale, int arcno) {
+	if (row < bottomChunk || row >= topChunk)
+		return nullptr;
+
+	unsigned int* rowp;
+	int middleChunk = (bottomChunk + topChunk) / 2;
+	if (row < middleChunk)
+		rowp = dChunk1 + 256 * 2 * arcno * (width + 2 * scale) * (row - bottomChunk);
+	else
+		rowp = dChunk2 + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
+
+	return rowp + 256 * 2 * arcno * col;
+}
+
 
 CudaPbDetector::CudaPbDetector(unsigned char* image_data, int image_width, int image_height, int scale) :
 	m_Width(image_width), m_Height(image_height), m_Scale(scale)
@@ -92,15 +116,19 @@ CudaPbDetector::CudaPbDetector(unsigned char* image_data, int image_width, int i
 		return;
 	}
 
-	if (!create2DHistoArray()) {
+	/*if (!create2DHistoArray()) {
 		printf("Error in constructor create2DHistoArray\n");
 		return;
-	}
+	}*/
 
 	if (!initializeInfluencePoints()) {
 		printf("Error in constructor initializeInfluencePoints\n");
 		return;
 	}
+
+	m_HistoAllocator = new HistoAllocator(m_Width, m_Height, m_Scale, m_ArcNo);
+	if (m_HistoAllocator->wasError())
+		return;
 
 	m_FullyInitialized = true;
 }
@@ -127,18 +155,23 @@ bool CudaPbDetector::createGradientImages()
 
 bool CudaPbDetector::initializeHistoRange(int start, int stop)
 {
-	for (int i = start; i < stop; ++i) {
-		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i],   256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int));
-		//printf("Alloc %d\n", i);
-		if (m_LastCudaError != cudaSuccess) {
-			printf("cudaMalloc error 1: %d\n", i);
-			return false;
-		}
+	if (stop < m_HistoAllocator->m_TopChunk2 && start >= m_HistoAllocator->m_BottomChunk1) {
+		return true;
 	}
 
-	cudaMemcpy(m_dHistograms + start, m_hHistograms + start, (stop - start) * sizeof(unsigned int*), cudaMemcpyHostToDevice);
-	if (m_LastCudaError != cudaSuccess) {
-		printf("cudaMemcpy error 1\n");
+	int middleChunk = (m_HistoAllocator->m_TopChunk2 + m_HistoAllocator->m_BottomChunk1) / 2;
+
+	if (start < middleChunk) {
+		printf("Error start below middleChunk\n");
+		return false;
+	}
+
+	//TODO: when stop > m_HistoAllocator->m_TopChunk2 we must be sure that we do not need the bottom chunk anymore!!! - be carefull streaming
+
+	m_HistoAllocator->setNewTopChunk();
+
+	if (m_HistoAllocator->wasError()) {
+		printf("Error when allocating new chunk\n");
 		return false;
 	}
 	
@@ -152,7 +185,7 @@ bool CudaPbDetector::deleteFromHistoMaps(int step, int index) {
 			return false;
 	}
 
-	if (index >= m_Scale + 1) {
+	/*if (index >= m_Scale + 1) {
 		m_LastCudaError = cudaFree(m_hHistograms[index - m_Scale - 1]);
 		if (m_LastCudaError != cudaSuccess) {
 			printf("cudaFree error 1: %d\n", index);
@@ -160,7 +193,7 @@ bool CudaPbDetector::deleteFromHistoMaps(int step, int index) {
 		}
 		//printf("Delete %d\n", index - m_Scale - 1);
 		m_hHistograms[index - m_Scale - 1] = nullptr;
-	}
+	}*/
 
 	return true;
 }
@@ -184,13 +217,15 @@ CudaPbDetector::~CudaPbDetector()
 	cudaFree(m_dSourceImage);
 	cudaFree(m_dGradientImages);
 	
-	for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
+	/*for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
 		if (m_hHistograms[i])
 			cudaFree(m_hHistograms[i]);
 	}
 
 	free(m_hHistograms);
-	cudaFree(m_dHistograms);
+	cudaFree(m_dHistograms);*/
+
+	delete m_HistoAllocator;
 
 	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
 		cudaFree(m_hHalfDiscInfluencePoints[i].m_Data); 
@@ -276,24 +311,6 @@ bool CudaPbDetector::initializeInfluencePoints() {
 }
 
 bool CudaPbDetector::executeChunk() {
-	//find how much memory is available
-	int total = 0;
-	int free = 0;
-	m_LastCudaError =  cudaMemGetInfo((size_t*)&free, (size_t*)&total);
-
-	if (m_LastCudaError != cudaSuccess)
-		return false;
-	
-	int noHistoChunks = free / 2 / m_HistoCellSize;
-
-	unsigned int* hMem = nullptr;
-	m_LastCudaError = cudaMalloc((void**)&hMem, noHistoChunks * m_HistoCellSize);
-
-	if (m_LastCudaError != cudaSuccess) {
-		return false;
-	}
-
-
 	int noThreads = 256;
 	int step = 7;
 
@@ -305,9 +322,13 @@ bool CudaPbDetector::executeChunk() {
 		int row_start = step * i;
 		int row_count = std::min(step, m_Height + 2 * m_Scale - row_start);
 		//printf("Row_start: %d Row_count %d \n", row_start, row_count);
-		calcHisto<<<row_count, noThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calcHisto<<<row_count, noThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, \
+			m_HistoAllocator->m_dChunk1, m_HistoAllocator->m_dChunk2, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_TopChunk2, \
+			m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
-		calculateGradients << <row_count, noThreads >> > (row_start, row_count, m_dGradientImages, m_dHistograms, m_Width, m_Height, m_Scale, m_ArcNo);
+		calculateGradients << <row_count, noThreads >> > (row_start, row_count, m_dGradientImages, \
+			m_HistoAllocator->m_dChunk1, m_HistoAllocator->m_dChunk2, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_TopChunk2, \
+			m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
 		for (int k = row_start; k < row_count + row_start; ++k) {
 			if (!deleteFromHistoMaps(step, k))

@@ -1,13 +1,16 @@
 #ifndef _CUDA_PbDetector_
 #define _CUDA_PbDetector_
 
-#include "discinversemasks.h"
+
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include "discinversemasks.h"
+#include "histoallocator.h"
 
-__global__ void calculateGradients(int row, int row_count, double* dGradientImages, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
-__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno);
-__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
+__global__ void calculateGradients(int row, int row_count, double* dGradientImages, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno);
+__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno);
+__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
+__device__ unsigned int* getHistoPointer(int row, int col, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int scale, int arcno);
 
 class CudaPbDetector {
 public:
@@ -95,7 +98,7 @@ private:
 	//the half disc masks around a center point
     DiscInverseMasks* m_Masks = nullptr;
 
-	const int m_HistoCellSize = 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int);
+	HistoAllocator* m_HistoAllocator = nullptr;
 
 };
 

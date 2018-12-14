@@ -13,6 +13,8 @@ cuda_add_library(cudaPb
   	cudapbdetector.h
 	cvector.h
 	cvector.cpp
+	histoallocator.h
+	histoallocator.cu
 	STATIC
   )
 

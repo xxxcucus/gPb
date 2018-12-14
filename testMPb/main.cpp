@@ -181,7 +181,7 @@ void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
 		exit(1);
 	}
 	auto cuda_start = std::chrono::high_resolution_clock::now();
-	if (!cudaImg.execute()) {
+	if (!cudaImg.executeChunk()) {
 		printf("Error when executing %s. Exiting\n", cudaImg.getErrorString());
 		exit(1);
 	}
