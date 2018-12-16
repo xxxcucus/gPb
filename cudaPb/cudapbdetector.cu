@@ -3,7 +3,9 @@
 #include <cstdlib>
 
 
-__global__ void calculateGradients(int row_start, int row_count, double* dGradientImages, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno) {
+__global__ void calculateGradients(int row_start, int row_count, double* dGradientImages, \
+	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk,\
+	int image_width, int image_height, int scale, int arcno) {
 	int row = row_start + blockIdx.x;
 	int index = threadIdx.x;
 	int stride = blockDim.x;
@@ -40,7 +42,10 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 	}
 }
 
-__global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno)
+__global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceImage,\
+	struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, \
+	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk,\
+	int image_width, int image_height, int scale, int arcno)
 {
 	int index = threadIdx.x;
 	int stride = blockDim.x;
@@ -58,7 +63,9 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 	}
 }
 
-__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno, int val, int i, int j)
+__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints,\
+	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, \
+	int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
 	for (int k = 0; k < totalHalfInfluencePoints; ++k) {
 		struct CVector n = dHalfDiscInfluencePoints[k];
@@ -88,7 +95,9 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 	}
 }
 
-__device__ unsigned int* getHistoPointer(int row, int col, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int width, int scale, int arcno) {
+__device__ unsigned int* getHistoPointer(int row, int col, \
+	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk,\
+	int width, int scale, int arcno) {
 	if (row < bottomChunk || row >= topChunk)
 		return nullptr;
 
@@ -126,6 +135,7 @@ CudaPbDetector::CudaPbDetector(unsigned char* image_data, int image_width, int i
 		return;
 	}
 
+	printf("Constructing histo allocator\n");
 	m_HistoAllocator = new HistoAllocator(m_Width, m_Height, m_Scale, m_ArcNo);
 	if (m_HistoAllocator->wasError())
 		return;
@@ -155,6 +165,7 @@ bool CudaPbDetector::createGradientImages()
 
 bool CudaPbDetector::initializeHistoRange(int start, int stop)
 {
+	printf("InitializeHistoRange %d-%d\n", start, stop);
 	if (stop < m_HistoAllocator->m_TopChunk2 && start >= m_HistoAllocator->m_BottomChunk1) {
 		return true;
 	}
@@ -171,7 +182,7 @@ bool CudaPbDetector::initializeHistoRange(int start, int stop)
 	m_HistoAllocator->setNewTopChunk();
 
 	if (m_HistoAllocator->wasError()) {
-		printf("Error when allocating new chunk\n");
+		printf("Error when allocating new chunk - %s\n", cudaGetErrorString(m_HistoAllocator->getError()));
 		return false;
 	}
 	

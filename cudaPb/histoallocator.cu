@@ -52,20 +52,24 @@ HistoAllocator::~HistoAllocator() {
 }
 
 void HistoAllocator::setNewTopChunk() {	
+	printf("SetNewTopChunk\n");
 	m_LastCudaError = cudaFree(m_dChunk1);
 	if (m_LastCudaError != cudaSuccess) {
-		return;
+		printf("BlaBla1\n");
+		//return;
 	}
 
 	unsigned int* temp;
 
 	m_LastCudaError = cudaMalloc((void**)&temp, m_NoHistoChunks * m_HistoCellSize);
 	if (m_LastCudaError != cudaSuccess) {
+		printf("BlaBla2\n");
 		return;
 	}
 
 	m_LastCudaError = cudaMemset(temp, 0, m_NoHistoChunks * m_HistoCellSize);
 	if (m_LastCudaError != cudaSuccess) {
+		printf("BlaBla3\n");
 		return;
 	}
 
