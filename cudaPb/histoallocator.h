@@ -27,7 +27,7 @@ public:
 	const int m_ArcNo;
 	const int m_Scale;
 
-	const int m_HistoCellSize; 
+	size_t m_HistoCellSize; 
 	int m_NoHistoChunks = 2 * m_Scale;
 
 	unsigned int** m_dHistograms;

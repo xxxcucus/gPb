@@ -2,10 +2,10 @@
 #include <cstdlib>
 #include <stdio.h>
 
-HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale)
-	: m_Width(width), m_Height(height), m_ArcNo(arcno), m_Scale(scale),
-	m_HistoCellSize(256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int))
-{
+HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale): 
+	m_Width(width), m_Height(height), m_ArcNo(arcno), m_Scale(scale) {
+
+	m_HistoCellSize = 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int);
 	//find how much memory is available
 	size_t total = 0;
 	size_t free = 0;
@@ -15,9 +15,10 @@ HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale)
 		return;
 	
 
-	size_t m_NoHistoChunks = 20/*free / 4 / m_HistoCellSize*/;
+	size_t m_NoHistoChunks = free / 4 / m_HistoCellSize;
 	printf("Allocating 2 chunks with %zu histo cells. Free %zu Total %zu\n", m_NoHistoChunks, free, total);
-	printf("Cell size %d\n", m_HistoCellSize);
+	printf("Arcno %d Width %d Scale %d\n", m_ArcNo, m_Width, m_Scale);
+	printf("Cell size %zu %llu\n", m_HistoCellSize, sizeof(unsigned int));
 
 	//preparing histograms
 	m_LastCudaError = cudaMalloc((void**)&m_dHistograms, 2 * sizeof(unsigned int*));
@@ -30,8 +31,11 @@ HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale)
 
 	printf("BlaBla11\n");
 	m_hHistograms = (unsigned int**)malloc(2 * sizeof(unsigned int*));
-
-	printf("BlaBla12\n");
+/*	if (m_LastCudaError != cudaSuccess) {
+		printf("BlaBla1-1\n");
+		return;
+	}*/
+	printf("BlaBla12 - %d\n", m_NoHistoChunks * m_HistoCellSize);
 	for (int i = 0; i < 2; ++i) {
 		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i], m_NoHistoChunks * m_HistoCellSize);
 		//printf("Alloc %d\n", i);

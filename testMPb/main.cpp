@@ -152,6 +152,7 @@ int main(int argc, char* argv[])
 	int nCols = img.cols / 3;
 	cv::Mat resImg = cv::Mat(nRows, nCols, img.type());
 	cv::resize(img, resImg, cv::Size(nCols, nRows));
+	printf("Image size %d - %d\n", nRows, nCols);
 
 	std::map<std::string, std::vector<int>> mapScales;
 	std::vector<int> scales = { 3, 5, 7 };
