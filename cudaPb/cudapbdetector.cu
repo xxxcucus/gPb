@@ -4,7 +4,7 @@
 
 
 __global__ void calculateGradients(int row_start, int row_count, double* dGradientImages, \
-	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
+	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
 	int image_width, int image_height, int scale, int arcno) {
 	int row = row_start + blockIdx.x;
 	int index = threadIdx.x;
@@ -15,7 +15,7 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 
 	for (int j = scale + index; j < image_width + scale; j += stride) {
 		//unsigned int* vHist = dHistograms[row - scale] +  j * 2 * arcno * 256;
-		unsigned int* vHist = getHistoPointer(row - scale, j, dChunk1, dChunk2, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
+		unsigned int* vHist = getHistoPointer(row - scale, j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
 		
 		//todo: error handling
 		if (vHist == nullptr)
@@ -44,7 +44,7 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 
 __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceImage,\
 	struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, \
-	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
+	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
 	int image_width, int image_height, int scale, int arcno)
 {
 	int index = threadIdx.x;
@@ -59,12 +59,12 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];
 		//printf("Index %d Val %d \n", j, int(val));
 		//with the point (i,j) with value val, update all histograms which contain this data point
-		addToHistoArray(dHalfDiscInfluencePoints, totalHalfInfluencePoints, dChunk1, dChunk2, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, image_height, scale, arcno, val, i, j);
+		addToHistoArray(dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, image_height, scale, arcno, val, i, j);
 	}
 }
 
 __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints,\
-	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, \
+	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, \
 	int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
 	for (int k = 0; k < totalHalfInfluencePoints; ++k) {
@@ -81,7 +81,7 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		}*/
 
 		//unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
-		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, n.m_Data[1] + j, dChunk1, dChunk2, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
+		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, n.m_Data[1] + j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
 		//todo: error handling
 		if (vHist == nullptr)
 			return;
@@ -96,7 +96,7 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 }
 
 __device__ unsigned int* getHistoPointer(int row, int col, \
-	unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
+	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
 	int width, int scale, int arcno) {
 	
 	int bottomChunk = bottomChunk1;
@@ -106,23 +106,42 @@ __device__ unsigned int* getHistoPointer(int row, int col, \
 	if (topChunk2 > topChunk1)
 		topChunk = topChunk2;
 
+	//printf("Bottom1 %d - Top1 %d\n Bottom2 %d - Top2 %d \n", bottomChunk1, topChunk1, bottomChunk2, topChunk2);
+	//printf("Bottom %d - Top %d \n", bottomChunk, topChunk);
 	
 	if (row < bottomChunk || row >= topChunk)
 		return nullptr;
 
+	if (col < 0 || col >= width + 2 * scale)
+		return nullptr;
+
+	if (topChunk1 - bottomChunk1 != topChunk2 - bottomChunk2) {
+		printf("Error difference 1\n");
+		return nullptr;
+	}
+
+	if (topChunk - bottomChunk != 2 * (topChunk1 - bottomChunk1)) {
+		printf("Error difference 2\n");
+		return nullptr;
+	}
+
 	unsigned int* rowp;
 	int middleChunk = (bottomChunk + topChunk) / 2;
 	if (row < middleChunk) {
+		if ((row - bottomChunk < 0) || (row - bottomChunk >= topChunk1 - bottomChunk1))
+			printf("Error bottomChunk!!!!\n");
 		if (bottomChunk1 < bottomChunk2)
-			rowp = dChunk1 + 256 * 2 * arcno * (width + 2 * scale) * (row - bottomChunk);
+			rowp = dHistograms[0] + 256 * 2 * arcno * (width + 2 * scale) * (row - bottomChunk);
 		else
-			rowp = dChunk2 + 256 * 2 * arcno * (width + 2 * scale) * (row - bottomChunk);
+			rowp = dHistograms[1] + 256 * 2 * arcno * (width + 2 * scale) * (row - bottomChunk);
 	}
 	else {
+		if ((row - middleChunk < 0) || (row - middleChunk >= topChunk1 - bottomChunk1))
+			printf("Error middleChunk!!!!\n");
 		if (bottomChunk1 < bottomChunk2)
-			rowp = dChunk2 + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
+			rowp = dHistograms[0] + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
 		else
-			rowp = dChunk1 + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
+			rowp = dHistograms[1] + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
 	}
 
 	return rowp + 256 * 2 * arcno * col;
@@ -183,11 +202,14 @@ bool CudaPbDetector::createGradientImages()
 bool CudaPbDetector::initializeHistoRange(int start, int stop)
 {
 	printf("InitializeHistoRange %d-%d\n", start, stop);
-	if (stop < m_HistoAllocator->m_TopChunk2 && start >= m_HistoAllocator->m_BottomChunk1) {
+	int topChunk = std::max(m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2);
+	int bottomChunk = std::min(m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2);
+	
+	if (stop < topChunk && start >= bottomChunk) {
 		return true;
 	}
 
-	int middleChunk = (m_HistoAllocator->m_TopChunk2 + m_HistoAllocator->m_BottomChunk1) / 2;
+	int middleChunk = (topChunk + bottomChunk) / 2;
 
 	if (start < middleChunk) {
 		printf("Error start below middleChunk\n");
@@ -349,15 +371,25 @@ bool CudaPbDetector::executeChunk() {
 	for (int i = 0; i < noSteps; ++i) {
 		int row_start = step * i;
 		int row_count = std::min(step, m_Height + 2 * m_Scale - row_start);
-		//printf("Row_start: %d Row_count %d \n", row_start, row_count);
+		printf("Row_start: %d Row_count %d BottomChunk1 %d TopChunk1 %d BottomChunk2 %d TopChunk2 %d \n", row_start, row_count, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk2);
 		calcHisto<<<row_count, noThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, \
-			m_HistoAllocator->m_dChunk1, m_HistoAllocator->m_dChunk2, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
+			m_HistoAllocator->m_dHistograms, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
 			m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
+		m_LastCudaError = cudaGetLastError();
+		if (m_LastCudaError != cudaSuccess) {
+			printf("Error execution 1\n");
+			return false;
+		}
 		calculateGradients << <row_count, noThreads >> > (row_start, row_count, m_dGradientImages, \
-			m_HistoAllocator->m_dChunk1, m_HistoAllocator->m_dChunk2, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
+			m_HistoAllocator->m_dHistograms, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
 			m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
+		m_LastCudaError = cudaGetLastError();
+		if (m_LastCudaError != cudaSuccess) {
+			printf("Error execution 2\n");
+			return false;
+		}
 		for (int k = row_start; k < row_count + row_start; ++k) {
 			if (!deleteFromHistoMaps(step, k))
 				return false;

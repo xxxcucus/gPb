@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 	cv::Mat img = cv::imread(sourcePath);
 	int nRows = img.rows / 3;
 	int nCols = img.cols / 3;
-	cv::Mat resImg;
+	cv::Mat resImg = cv::Mat(nRows, nCols, img.type());
 	cv::resize(img, resImg, cv::Size(nCols, nRows));
 
 	std::map<std::string, std::vector<int>> mapScales;

@@ -11,34 +11,56 @@ HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale)
 	size_t free = 0;
 	m_LastCudaError = cudaMemGetInfo(&free, &total);
 
-	if (m_LastCudaError != cudaSuccess)
+	if (m_LastCudaError != cudaSuccess) 
 		return;
+	
 
 	size_t m_NoHistoChunks = free / 4 / m_HistoCellSize;
 	printf("Allocating 2 chunks with %zu histo cells. Free %zu Total %zu\n", m_NoHistoChunks, free, total);
 
-	m_LastCudaError = cudaMalloc((void**)&m_dChunk1, m_NoHistoChunks * m_HistoCellSize);
+	//preparing histograms
+	m_LastCudaError = cudaMalloc((void**)&m_dHistograms, 2 * sizeof(unsigned int*));
+	printf("BlaBla10\n");
+
 	if (m_LastCudaError != cudaSuccess) {
+		printf("BlaBla1\n");
 		return;
 	}
 
-	m_LastCudaError = cudaMemset(m_dChunk1, 0, m_NoHistoChunks * m_HistoCellSize);
+	printf("BlaBla11\n");
+	m_hHistograms = (unsigned int**)malloc(2 * sizeof(unsigned int*));
+
+	printf("BlaBla12\n");
+	for (int i = 0; i < 2; ++i) {
+		m_LastCudaError = cudaMalloc((void**)&m_hHistograms[i], m_NoHistoChunks * m_HistoCellSize);
+		//printf("Alloc %d\n", i);
+		if (m_LastCudaError != cudaSuccess) {
+			printf("cudaMalloc error 1: %d\n", i);
+			return;
+		}
+
+		cudaMemcpy(m_dHistograms, m_hHistograms, 2 * sizeof(unsigned int*), cudaMemcpyHostToDevice);
+		if (m_LastCudaError != cudaSuccess) {
+			printf("cudaMemcpy error 1\n");
+			return;
+		}
+	}
+
+	printf("BlaBla13\n");
+	m_LastCudaError = cudaMemset(m_hHistograms[0], 0, m_NoHistoChunks * m_HistoCellSize);
 	if (m_LastCudaError != cudaSuccess) {
+		printf("cudaMemset error 1\n");
 		return;
 	}
 
-	m_LastCudaError = cudaMalloc((void**)&m_dChunk2, m_NoHistoChunks * m_HistoCellSize);
+	printf("BlaBla14\n");
+	m_LastCudaError = cudaMemset(m_hHistograms[1], 0, m_NoHistoChunks * m_HistoCellSize);
 	if (m_LastCudaError != cudaSuccess) {
+		printf("cudaMemset error 2\n");
 		return;
 	}
 
-	m_LastCudaError = cudaMemset(m_dChunk2, 0, m_NoHistoChunks * m_HistoCellSize);
-	if (m_LastCudaError != cudaSuccess) {
-		return;
-	}
-
-	//TODO: cudaMemset
-
+	printf("BlaBla15\n");
 	m_TopChunk1 = int(m_NoHistoChunks);
 	m_BottomChunk1 = 0;
 	m_TopChunk2 = 2 * int(m_NoHistoChunks);
@@ -47,12 +69,14 @@ HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale)
 
 
 HistoAllocator::~HistoAllocator() {
-	cudaFree(m_dChunk1);
-	cudaFree(m_dChunk2);
+	cudaFree(m_hHistograms[0]);
+	cudaFree(m_hHistograms[1]);
+	cudaFree(m_dHistograms);
+	free(m_hHistograms);
 }
 
 void HistoAllocator::setNewTopChunk() {	
-	printf("SetNewTopChunk\n");
+	printf("SetNewTopChunk %d-%d-%d-%d\n", m_BottomChunk1, m_TopChunk1, m_BottomChunk2, m_TopChunk2);
 	/*m_LastCudaError = cudaFree(m_dChunk1);
 	if (m_LastCudaError != cudaSuccess) {
 		printf("BlaBla1\n");
@@ -68,18 +92,18 @@ void HistoAllocator::setNewTopChunk() {
 	}*/
 
 	if (m_BottomChunk1 < m_BottomChunk2) {
-		m_LastCudaError = cudaMemset(m_dChunk1, 0, m_NoHistoChunks * m_HistoCellSize);
+		m_LastCudaError = cudaMemset(m_hHistograms[0], 0, m_NoHistoChunks * m_HistoCellSize);
 		if (m_LastCudaError != cudaSuccess) {
-			printf("BlaBla3\n");
+			printf("BlaBla3-1\n");
 			return;
 		}
 		m_BottomChunk1 = m_TopChunk2;
 		m_TopChunk1 = m_TopChunk2 + m_TopChunk2 - m_BottomChunk2;
 	}
 	else {
-		m_LastCudaError = cudaMemset(m_dChunk2, 0, m_NoHistoChunks * m_HistoCellSize);
+		m_LastCudaError = cudaMemset(m_hHistograms[1], 0, m_NoHistoChunks * m_HistoCellSize);
 		if (m_LastCudaError != cudaSuccess) {
-			printf("BlaBla3\n");
+			printf("BlaBla3-2\n");
 			return;
 		}
 		m_BottomChunk2 = m_TopChunk1;

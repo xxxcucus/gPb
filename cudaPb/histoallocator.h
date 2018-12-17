@@ -30,8 +30,8 @@ public:
 	const int m_HistoCellSize; 
 	int m_NoHistoChunks = 2 * m_Scale;
 
-	unsigned int* m_dChunk1 = nullptr;
-	unsigned int* m_dChunk2 = nullptr;
+	unsigned int** m_dHistograms;
+	unsigned int** m_hHistograms;
 
 	int m_TopChunk1 = 0;
 	int m_BottomChunk1 = 0;
