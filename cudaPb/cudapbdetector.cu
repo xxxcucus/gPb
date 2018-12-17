@@ -128,7 +128,7 @@ __device__ unsigned int* getHistoPointer(int row, int col, \
 	unsigned int* rowp;
 	int middleChunk = (bottomChunk + topChunk) / 2;
 	if (row < middleChunk) {
-		if ((row - bottomChunk < 0) || (row - bottomChunk >= topChunk1 - bottomChunk1)) {
+		if ((row - bottomChunk < 0) || (row - bottomChunk >= topChunk1 - bottomChunk1 - 1)) {
 			printf("Error bottomChunk!!!!\n");
 			return nullptr;
 		}
