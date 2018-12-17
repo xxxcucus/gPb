@@ -7,10 +7,10 @@
 #include "discinversemasks.h"
 #include "histoallocator.h"
 
-__global__ void calculateGradients(int row, int row_count, double* dGradientImages, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno);
-__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno);
-__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
-__device__ unsigned int* getHistoPointer(int row, int col, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk, int topChunk, int image_width, int scale, int arcno);
+__global__ void calculateGradients(int row, int row_count, double* dGradientImages, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno);
+__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno);
+__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
+__device__ unsigned int* getHistoPointer(int row, int col, unsigned int* dChunk1, unsigned int* dChunk2, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int scale, int arcno);
 
 class CudaPbDetector {
 public:
