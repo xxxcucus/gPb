@@ -81,7 +81,7 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		}*/
 
 		//unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
-		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, /*n.m_Data[1] + j*/0, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
+		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, n.m_Data[1] + j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
 		//todo: error handling
 		if (vHist == nullptr)
 			continue;
@@ -125,7 +125,7 @@ __device__ unsigned int* getHistoPointer(int row, int col, \
 		return nullptr;
 	}
 
-	unsigned int* rowp;
+	unsigned int* rowp = dHistograms[0];
 	int middleChunk = (bottomChunk + topChunk) / 2;
 	if (row < middleChunk) {
 		if ((row - bottomChunk < 0) || (row - bottomChunk >= topChunk1 - bottomChunk1 - 1)) {
