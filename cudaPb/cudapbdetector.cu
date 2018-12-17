@@ -81,12 +81,12 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		}*/
 
 		//unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
-		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, n.m_Data[1] + j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
+		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, /*n.m_Data[1] + j*/0, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
 		//todo: error handling
 		if (vHist == nullptr)
-			return;
+			continue;
 		for (unsigned int l = 2; l < n.m_Size; ++l) {
-			if (n.m_Data[l] > 2 * arcno)
+			if (n.m_Data[l] >= 2 * arcno || val < 0 || val >= 256)
 				continue;
 			//qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
 			//TODO: use atomic operation
@@ -128,20 +128,24 @@ __device__ unsigned int* getHistoPointer(int row, int col, \
 	unsigned int* rowp;
 	int middleChunk = (bottomChunk + topChunk) / 2;
 	if (row < middleChunk) {
-		if ((row - bottomChunk < 0) || (row - bottomChunk >= topChunk1 - bottomChunk1))
+		if ((row - bottomChunk < 0) || (row - bottomChunk >= topChunk1 - bottomChunk1)) {
 			printf("Error bottomChunk!!!!\n");
+			return nullptr;
+		}
 		if (bottomChunk1 < bottomChunk2)
 			rowp = dHistograms[0] + 256 * 2 * arcno * (width + 2 * scale) * (row - bottomChunk);
 		else
 			rowp = dHistograms[1] + 256 * 2 * arcno * (width + 2 * scale) * (row - bottomChunk);
 	}
 	else {
-		if ((row - middleChunk < 0) || (row - middleChunk >= topChunk1 - bottomChunk1))
+		if ((row - middleChunk < 0) || (row - middleChunk >= topChunk1 - bottomChunk1 - 1)) {
 			printf("Error middleChunk!!!!\n");
+			return nullptr;
+		}
 		if (bottomChunk1 < bottomChunk2)
-			rowp = dHistograms[0] + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
-		else
 			rowp = dHistograms[1] + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
+		else
+			rowp = dHistograms[0] + 256 * 2 * arcno * (width + 2 * scale) * (row - middleChunk);
 	}
 
 	return rowp + 256 * 2 * arcno * col;
@@ -362,7 +366,7 @@ bool CudaPbDetector::initializeInfluencePoints() {
 
 bool CudaPbDetector::executeChunk() {
 	int noThreads = 256;
-	int step = 7;
+	int step = 1;
 
 	if (!initializeHistoRange(0, m_Scale + step + 1))
 		return false;
@@ -371,7 +375,7 @@ bool CudaPbDetector::executeChunk() {
 	for (int i = 0; i < noSteps; ++i) {
 		int row_start = step * i;
 		int row_count = std::min(step, m_Height + 2 * m_Scale - row_start);
-		printf("Row_start: %d Row_count %d BottomChunk1 %d TopChunk1 %d BottomChunk2 %d TopChunk2 %d \n", row_start, row_count, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk2);
+		printf("Row_start: %d Row_count %d Scale %d BottomChunk1 %d TopChunk1 %d BottomChunk2 %d TopChunk2 %d \n", row_start, row_count, m_Scale, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk2);
 		calcHisto<<<row_count, noThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, \
 			m_HistoAllocator->m_dHistograms, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
 			m_Width, m_Height, m_Scale, m_ArcNo);

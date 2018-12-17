@@ -15,8 +15,9 @@ HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale)
 		return;
 	
 
-	size_t m_NoHistoChunks = free / 4 / m_HistoCellSize;
+	size_t m_NoHistoChunks = 20/*free / 4 / m_HistoCellSize*/;
 	printf("Allocating 2 chunks with %zu histo cells. Free %zu Total %zu\n", m_NoHistoChunks, free, total);
+	printf("Cell size %d\n", m_HistoCellSize);
 
 	//preparing histograms
 	m_LastCudaError = cudaMalloc((void**)&m_dHistograms, 2 * sizeof(unsigned int*));
