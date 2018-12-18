@@ -28,7 +28,7 @@ public:
 	const int m_Scale;
 
 	size_t m_HistoCellSize; 
-	int m_NoHistoChunks = 2 * m_Scale;
+	size_t m_NoHistoChunks = 2 * m_Scale;
 
 	unsigned int** m_dHistograms;
 	unsigned int** m_hHistograms;

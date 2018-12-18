@@ -125,7 +125,7 @@ __device__ unsigned int* getHistoPointer(int row, int col, \
 		return nullptr;
 	}
 
-	unsigned int* rowp = dHistograms[0];
+	unsigned int* rowp;
 	int middleChunk = (bottomChunk + topChunk) / 2;
 	//printf("Row %d Middlechunk %d\n", row, middleChunk);
 	if (row < middleChunk) {

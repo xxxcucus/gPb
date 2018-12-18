@@ -128,9 +128,7 @@ void MultiscalePb::initializeAlphas() {
 }
 
 void MultiscalePb::computeEdges() {
-	printf("BlaBla1\n");
 	std::vector<cv::Mat> orientGradientImages;
-	printf("BlaBla2\n");
 	for (unsigned int o = 0; o < m_Orientations.size(); ++o) {
 		cv::Mat sumGrad = cv::Mat::zeros(m_OrigImage.size(), CV_64FC1);
 
@@ -140,9 +138,7 @@ void MultiscalePb::computeEdges() {
 		}
 		orientGradientImages.push_back(sumGrad);
 	}
-	printf("BlaBla3\n");
 	cv::Mat maxImage = cv::Mat::zeros(m_OrigImage.size(), CV_64FC1);
-	printf("BlaBla4\n");
 	for (int i = 0; i < m_OrigImage.rows; ++i) {
 		for (int j = 0; j < m_OrigImage.cols; ++j) {
 			double max = -1000000.9;
@@ -154,11 +150,9 @@ void MultiscalePb::computeEdges() {
 			maxImage.at<double>(i, j) = max;
 		}
 	}
-	printf("BlaBla5\n");
 	
 	cv::Mat nonMaxSup = nonMaximumSuppression(orientGradientImages, maxImage);
 	cv::normalize(nonMaxSup, m_GradImage, 0, 255, cv::NORM_MINMAX);
-	printf("BlaBla6\n");
 }
 
 cv::Mat MultiscalePb::nonMaximumSuppression(const std::vector<cv::Mat> orientImgs, cv::Mat maxImage) {
