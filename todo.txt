@@ -11,3 +11,4 @@ Options: folders for texture training, Kernel parameters as options, alpha optim
 10. Streaming 
 11. Masks in shared memory. Determine dynamically if there is enough place for them.
 12. Automatic kernel parameter computation.
+13. Dynamic parallelism
