@@ -181,7 +181,7 @@ CudaPbDetector::CudaPbDetector(unsigned char* image_data, int image_width, int i
 	}
 
 	printf("Constructing histo allocator\n");
-	m_HistoAllocator = new HistoAllocator(m_Width, m_Height, m_ArcNo, m_Scale);
+	m_HistoAllocator = new HistoAllocator(m_Width, m_Height, m_ArcNo, m_Scale, m_Step);
 	if (m_HistoAllocator->wasError())
 		return;
 
@@ -370,18 +370,16 @@ bool CudaPbDetector::initializeInfluencePoints() {
 }
 
 bool CudaPbDetector::executeChunk() {
-	int noThreads = 256;
-	int step = 7;
 
-	if (!initializeHistoRange(0, m_Scale + step + 1))
+	if (!initializeHistoRange(0, m_Scale + m_Step + 1))
 		return false;
-	int noSteps = (m_Height + 2 * m_Scale + step - 1) / step;
+	int noSteps = (m_Height + 2 * m_Scale + m_Step - 1) / m_Step;
 
 	for (int i = 0; i < noSteps; ++i) {
-		int row_start = step * i;
-		int row_count = std::min(step, m_Height + 2 * m_Scale - row_start);
+		int row_start = m_Step * i;
+		int row_count = std::min(m_Step, m_Height + 2 * m_Scale - row_start);
 		//printf("Row_start: %d Row_count %d Scale %d BottomChunk1 %d TopChunk1 %d BottomChunk2 %d TopChunk2 %d \n", row_start, row_count, m_Scale, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk2);
-		calcHisto<<<row_count, noThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, \
+		calcHisto<<<row_count, m_NoThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, \
 			m_HistoAllocator->m_dHistograms, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
 			m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
@@ -390,7 +388,7 @@ bool CudaPbDetector::executeChunk() {
 			printf("Error execution 1\n");
 			return false;
 		}
-		calculateGradients << <row_count, noThreads >> > (row_start, row_count, m_dGradientImages, \
+		calculateGradients << <row_count, m_NoThreads >> > (row_start, row_count, m_dGradientImages, \
 			m_HistoAllocator->m_dHistograms, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
 			m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
@@ -400,7 +398,7 @@ bool CudaPbDetector::executeChunk() {
 			return false;
 		}
 		for (int k = row_start; k < row_count + row_start; ++k) {
-			if (!deleteFromHistoMaps(step, k))
+			if (!deleteFromHistoMaps(m_Step, k))
 				return false;
 		}	
 	}

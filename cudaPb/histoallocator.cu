@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 
-HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale): 
-	m_Width(width), m_Height(height), m_ArcNo(arcno), m_Scale(scale) {
+HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale, int step): 
+	m_Width(width), m_Height(height), m_ArcNo(arcno), m_Scale(scale), m_Step(step) {
 
 	m_HistoCellSize = 256 * 2 * m_ArcNo * (m_Width + 2 * m_Scale) * sizeof(unsigned int);
 	//find how much memory is available
@@ -17,8 +17,9 @@ HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale):
 	
 
 	m_NoHistoChunks = free / 4 / m_HistoCellSize;
-	if (m_Scale * 4 < m_NoHistoChunks)
-		m_NoHistoChunks = m_Scale * 4;
+	int temp = (m_Scale > m_Step) ? m_Scale : m_Step;
+	if (temp * 4 < m_NoHistoChunks)
+		m_NoHistoChunks = temp * 4;
 	//printf("Allocating 2 chunks with %zu histo cells. Free %zu Total %zu\n", m_NoHistoChunks, free, total);
 	//printf("Arcno %d Width %d Scale %d\n", m_ArcNo, m_Width, m_Scale);
 	//printf("Cell size %zu %llu\n", m_HistoCellSize, sizeof(unsigned int));

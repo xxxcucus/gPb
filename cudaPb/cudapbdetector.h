@@ -90,6 +90,9 @@ private:
 	int m_Height = 0;
 	int m_Scale = 0;
 
+	int m_Step = 7;
+	int m_NoThreads = 256;
+
 	cudaError_t m_LastCudaError;
 
 	int m_ArcNo = 4;

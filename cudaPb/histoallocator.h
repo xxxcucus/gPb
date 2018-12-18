@@ -7,7 +7,7 @@
 class HistoAllocator {
 
 public: 
-	HistoAllocator(int width, int height, int arcno, int scale);
+	HistoAllocator(int width, int height, int arcno, int scale, int step);
 	~HistoAllocator();
 
 	bool wasError() {
@@ -26,6 +26,7 @@ public:
 	const int m_Height;
 	const int m_ArcNo;
 	const int m_Scale;
+	const int m_Step;
 
 	size_t m_HistoCellSize; 
 	size_t m_NoHistoChunks = 2 * m_Scale;
