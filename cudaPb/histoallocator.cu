@@ -15,7 +15,6 @@ HistoAllocator::HistoAllocator(int width, int height, int arcno, int scale, int 
 	if (m_LastCudaError != cudaSuccess) 
 		return;
 	
-
 	m_NoHistoChunks = free / 4 / m_HistoCellSize;
 	int temp = (m_Scale > m_Step) ? m_Scale : m_Step;
 	if (temp * 4 < m_NoHistoChunks)

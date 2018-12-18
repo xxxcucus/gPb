@@ -102,7 +102,6 @@ private:
     DiscInverseMasks* m_Masks = nullptr;
 
 	HistoAllocator* m_HistoAllocator = nullptr;
-
 };
 
 
