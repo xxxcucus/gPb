@@ -68,7 +68,7 @@ private:
 	* such that memory is used efficiently
 	* @param index
 	*/
-	bool deleteFromHistoMaps(int step, int index);
+	bool updateHistoBuffer(int step, int index);
 
     /**
      * Copies m_Masks->getHalfDiscInfluencePoints()

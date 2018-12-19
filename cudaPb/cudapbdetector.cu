@@ -245,22 +245,12 @@ bool CudaPbDetector::initializeHistoRange(int start, int stop)
 	return true;
 }
 
-bool CudaPbDetector::deleteFromHistoMaps(int step, int index) {
+bool CudaPbDetector::updateHistoBuffer(int step, int index) {
 
 	if (index + m_Scale + step + 1 < m_Height + 2 * m_Scale) {
 		if (!initializeHistoRange(index + m_Scale + step + 1, index + m_Scale + step + 2))
 			return false;
 	}
-
-	/*if (index >= m_Scale + 1) {
-		m_LastCudaError = cudaFree(m_hHistograms[index - m_Scale - 1]);
-		if (m_LastCudaError != cudaSuccess) {
-			printf("cudaFree error 1: %d\n", index);
-			return false;
-		}
-		//printf("Delete %d\n", index - m_Scale - 1);
-		m_hHistograms[index - m_Scale - 1] = nullptr;
-	}*/
 
 	return true;
 }
@@ -427,7 +417,7 @@ bool CudaPbDetector::executeChunk() {
 			return false;
 		}
 		for (int k = row_start; k < row_count + row_start; ++k) {
-			if (!deleteFromHistoMaps(m_Step, k))
+			if (!updateHistoBuffer(m_Step, k))
 				return false;
 		}	
 	}
