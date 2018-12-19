@@ -48,8 +48,6 @@ private:
     */
 	bool createGradientImages();
 
-
-
     /**
      * Creates empty histograms on the GPU
      * for rows of image between start and stop.
