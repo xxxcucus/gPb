@@ -255,19 +255,6 @@ bool CudaPbDetector::updateHistoBuffer(int step, int index) {
 	return true;
 }
 
-bool CudaPbDetector::create2DHistoArray()
-{
-	//preparing histograms
-	m_LastCudaError = cudaMalloc((void**)&m_dHistograms, (m_Height + 2 * m_Scale) * sizeof(unsigned int*));
-
-	if (m_LastCudaError != cudaSuccess)
-		return false;
-
-	m_hHistograms = (unsigned int**)malloc((m_Height + 2 * m_Scale) * sizeof(unsigned int*));
-
-	return true;
-}
-
 //TODO: to check this
 CudaPbDetector::~CudaPbDetector()
 {

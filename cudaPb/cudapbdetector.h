@@ -42,10 +42,7 @@ private:
     * Allocates image on the GPU, pads it with zeros, and copies from host to gpu the image data. 
     */
 	bool copyImageToGPU(unsigned char* image_data);
-    /**
-    * Creates 2D histogram array in the GPU.
-    */
-	bool create2DHistoArray();
+
     /**
     * Allocates memory for the gradient images.
     */
