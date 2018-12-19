@@ -89,11 +89,12 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		if (vHist == nullptr)
 			continue;
 		for (unsigned int l = 2; l < n.m_Size; ++l) {
-			if (data[l] >= 2 * arcno || val < 0 || val >= 256)
+			int idx = data[l];
+			if (idx >= 2 * arcno || val < 0 || val >= 256)
 				continue;
 			//qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
 			//TODO: use atomic operation
-			atomicInc(vHist + data[l] * 256 + val, 4 * scale * scale);
+			atomicInc(vHist + idx * 256 + val, 4 * scale * scale);
 		}
 	}
 }
