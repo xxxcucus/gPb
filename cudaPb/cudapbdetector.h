@@ -36,6 +36,8 @@ public:
 
 private:
 	
+	void readDeviceProperties();
+
     /**
     * Allocates image on the GPU, pads it with zeros, and copies from host to gpu the image data. 
     */
@@ -102,6 +104,8 @@ private:
     DiscInverseMasks* m_Masks = nullptr;
 
 	HistoAllocator* m_HistoAllocator = nullptr;
+
+	size_t m_SharedMemoryPerBlock;
 };
 
 

@@ -191,6 +191,8 @@ CudaPbDetector::CudaPbDetector(unsigned char* image_data, int image_width, int i
 	if (m_HistoAllocator->wasError())
 		return;
 
+	readDeviceProperties();
+
 	m_FullyInitialized = true;
 }
 
@@ -432,4 +434,11 @@ bool CudaPbDetector::executeChunk() {
 
 	m_LastCudaError = cudaMemcpy(m_hGradientImages, m_dGradientImages, m_ArcNo * m_Width * m_Height * sizeof(double), cudaMemcpyDeviceToHost);
 	return m_LastCudaError == cudaSuccess;	
+}
+
+
+void CudaPbDetector::readDeviceProperties() {
+	cudaDeviceProp deviceProp;
+	cudaGetDeviceProperties(&deviceProp, 0);
+	m_SharedMemoryPerBlock = deviceProp.sharedMemPerBlock;
 }
