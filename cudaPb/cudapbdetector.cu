@@ -1,6 +1,7 @@
 #include "cudapbdetector.h"
 #include "cvector.h"
 #include <cstdlib>
+#include <algorithm>
 
 
 __global__ void calculateGradients(int row_start, int row_count, double* dGradientImages, \
@@ -27,13 +28,9 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 			//printf("Chi square for:\n");
 			double val = 0.0;
 			for (int k = 0; k < 256; ++k) {
-				if (histo1[k] != 0 || histo2[k] != 0) {
-					double diff = double(int(histo1[k] - histo2[k]));
-					double sum = double(histo1[k] + histo2[k]);
-					val = val + diff * diff / sum;
-					//printf("[%d - %d = %f]", histo1[k], histo2[k], val);
-				}
-
+				double diff = double(int(histo1[k] - histo2[k]));
+				double sum = double(histo1[k] + histo2[k]);
+				val = val + (sum == 0) ? 0 : diff * diff / sum;
 			}
 			double grad = val;
 			//printf("Grad[%d, %d, %d]=%f\n", row, j, i, grad);
@@ -43,7 +40,7 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 }
 
 __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceImage,\
-	struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, \
+	int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, \
 	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
 	int image_width, int image_height, int scale, int arcno)
 {
@@ -63,16 +60,27 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 	}
 }
 
-__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints,\
+__device__ void addToHistoArray(int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints,\
 	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, \
 	int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
-	for (int k = 0; k < totalHalfInfluencePoints; ++k) {
-		struct CVector n = dHalfDiscInfluencePoints[k];
-		if ((n.m_Data[0] + i) < 0 || (n.m_Data[0] + i) >= image_height + 2 * scale)
+	int k = 0;
+
+	while (k < totalHalfInfluencePoints) {
+		//printf("K = %d Total %d\n", k, totalHalfInfluencePoints);
+		int data_size = dHalfDiscInfluencePoints[k];
+		if (k + 1 >= totalHalfInfluencePoints || k + 2 >= totalHalfInfluencePoints)
+			break;
+		int row = dHalfDiscInfluencePoints[k + 1] + i;
+		int col = dHalfDiscInfluencePoints[k + 2] + j;
+		if (row < 0 || row >= image_height + 2 * scale) {
+			k = k + data_size + 1;
 			continue;
-		if ((n.m_Data[1] + j) < 0 || (n.m_Data[1] + j) >= image_width + 2 * scale)
+		}
+		if (col < 0 || col >= image_width + 2 * scale) {
+			k = k + data_size + 1;
 			continue;
+		}
 
 		//printf("Compute at  %d %d\n", n.m_Data[0] + i, n.m_Data[1] + j);
 		/*if (int(vMaps[n[0] + i].size()) != m_SingleChannelImage.cols + 2 * m_Scale) {
@@ -81,17 +89,23 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		}*/
 
 		//unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
-		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, n.m_Data[1] + j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
+		unsigned int* vHist = getHistoPointer(row, col, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
 		//todo: error handling
-		if (vHist == nullptr)
+		if (vHist == nullptr) {
+			k = k + data_size + 1;
 			continue;
-		for (unsigned int l = 2; l < n.m_Size; ++l) {
-			if (n.m_Data[l] >= 2 * arcno || val < 0 || val >= 256)
+		}
+		for (unsigned int l = 0; l < data_size - 2; ++l) {
+			if (k + l + 3 >= totalHalfInfluencePoints)
+				break;
+			int idx = dHalfDiscInfluencePoints[k + l + 3];
+			if (idx < 0 || idx >= 2 * arcno || val < 0 || val >= 256)
 				continue;
 			//qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
 			//TODO: use atomic operation
-			atomicInc(vHist + n.m_Data[l] * 256 + val, 4 * scale * scale);
+			atomicInc(vHist + idx * 256 + val, 4 * scale * scale);
 		}
+		k = k + data_size + 1;
 	}
 }
 
@@ -275,23 +289,11 @@ CudaPbDetector::~CudaPbDetector()
 {
 	cudaFree(m_dSourceImage);
 	cudaFree(m_dGradientImages);
-	
-	/*for (int i = 0; i < m_Height + 2 * m_Scale; ++i) {
-		if (m_hHistograms[i])
-			cudaFree(m_hHistograms[i]);
-	}
-
-	free(m_hHistograms);
-	cudaFree(m_dHistograms);*/
 
 	delete m_HistoAllocator;
 
-	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
-		cudaFree(m_hHalfDiscInfluencePoints[i].m_Data); 
-	}
-
+	cudaFree(m_dHalfDiscInfluencePoints); 
 	free(m_hHalfDiscInfluencePoints);
-	cudaFree(m_dHalfDiscInfluencePoints);
 }
 
 bool CudaPbDetector::copyImageToGPU(unsigned char* image_data)
@@ -333,9 +335,11 @@ bool CudaPbDetector::copyImageToGPU(unsigned char* image_data)
  * Copies m_Masks->getHalfDiscInfluencePoints()
  * to the GPU
  */
-bool CudaPbDetector::initializeInfluencePoints() {
+/*bool CudaPbDetector::initializeInfluencePoints() {
 	m_Masks = new DiscInverseMasks(m_Scale);
 	std::vector<std::vector<int>> neighb = m_Masks->getHalfDiscInfluencePoints();
+
+
 
 	m_TotalHalfInfluencePoints = int(neighb.size());
 
@@ -367,6 +371,39 @@ bool CudaPbDetector::initializeInfluencePoints() {
 		return false;
 
 	return true;	
+}*/
+
+bool CudaPbDetector::initializeInfluencePoints() {
+	m_Masks = new DiscInverseMasks(m_Scale);
+	std::vector<std::vector<int>> neighb = m_Masks->getHalfDiscInfluencePoints();
+
+	//save the vectors inside a single linear vector
+	std::vector<int> linear_neighb;
+	for (auto nb : neighb) {
+		linear_neighb.push_back(int(nb.size()));
+		for (auto ne : nb)
+			linear_neighb.push_back(ne);
+	}
+
+	m_TotalHalfInfluencePoints = int(linear_neighb.size());
+	printf("Total influence points %d\n", m_TotalHalfInfluencePoints);
+
+	m_hHalfDiscInfluencePoints = (int*)malloc(m_TotalHalfInfluencePoints * sizeof(int));
+	for (unsigned int i = 0; i < linear_neighb.size(); ++i) {
+		//printf("[%d] = %d\n", i, linear_neighb[i]);
+		m_hHalfDiscInfluencePoints[i] = linear_neighb[i];
+	}
+
+	//preparing histograms
+	m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(int));
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+
+	cudaMemcpy(m_dHalfDiscInfluencePoints, m_hHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(int), cudaMemcpyHostToDevice);
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+
+	return true;
 }
 
 bool CudaPbDetector::executeChunk() {

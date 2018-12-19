@@ -8,8 +8,8 @@
 #include "histoallocator.h"
 
 __global__ void calculateGradients(int row, int row_count, double* dGradientImages, unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno);
-__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno);
-__device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
+__global__ void calcHisto(int row, int row_count, unsigned char* dSourceImage, int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno);
+__device__ void addToHistoArray(int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int image_height, int scale, int arcno, int val, int i, int j);
 __device__ unsigned int* getHistoPointer(int row, int col, unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, int image_width, int scale, int arcno);
 
 class CudaPbDetector {
@@ -82,8 +82,8 @@ private:
 
 	unsigned int** m_dHistograms;
 	unsigned int** m_hHistograms;
-	struct CVector* m_dHalfDiscInfluencePoints;
-	struct CVector* m_hHalfDiscInfluencePoints = nullptr;
+	int* m_dHalfDiscInfluencePoints;
+	int* m_hHalfDiscInfluencePoints = nullptr;
 	int m_TotalHalfInfluencePoints = 0;
 
 	int m_Width = 0;
