@@ -69,9 +69,10 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 {
 	for (int k = 0; k < totalHalfInfluencePoints; ++k) {
 		struct CVector n = dHalfDiscInfluencePoints[k];
-		if ((n.m_Data[0] + i) < 0 || (n.m_Data[0] + i) >= image_height + 2 * scale)
+		int* data = n.m_Data;
+		if ((data[0] + i) < 0 || (data[0] + i) >= image_height + 2 * scale)
 			continue;
-		if ((n.m_Data[1] + j) < 0 || (n.m_Data[1] + j) >= image_width + 2 * scale)
+		if ((data[1] + j) < 0 || (data[1] + j) >= image_width + 2 * scale)
 			continue;
 
 		//printf("Compute at  %d %d\n", n.m_Data[0] + i, n.m_Data[1] + j);
@@ -81,16 +82,16 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		}*/
 
 		//unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
-		unsigned int* vHist = getHistoPointer(n.m_Data[0] + i, n.m_Data[1] + j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
+		unsigned int* vHist = getHistoPointer(data[0] + i, data[1] + j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
 		//todo: error handling
 		if (vHist == nullptr)
 			continue;
 		for (unsigned int l = 2; l < n.m_Size; ++l) {
-			if (n.m_Data[l] >= 2 * arcno || val < 0 || val >= 256)
+			if (data[l] >= 2 * arcno || val < 0 || val >= 256)
 				continue;
 			//qDebug() << "Insert into histo " << n[k] << " val " << val << " vHist size " << vHist.size();
 			//TODO: use atomic operation
-			atomicInc(vHist + n.m_Data[l] * 256 + val, 4 * scale * scale);
+			atomicInc(vHist + data[l] * 256 + val, 4 * scale * scale);
 		}
 	}
 }
