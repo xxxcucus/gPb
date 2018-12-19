@@ -70,9 +70,11 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 	for (int k = 0; k < totalHalfInfluencePoints; ++k) {
 		struct CVector n = dHalfDiscInfluencePoints[k];
 		int* data = n.m_Data;
-		if ((data[0] + i) < 0 || (data[0] + i) >= image_height + 2 * scale)
+		int row = data[0] + i;
+		int col = data[1] + j;
+		if (row < 0 || row >= image_height + 2 * scale)
 			continue;
-		if ((data[1] + j) < 0 || (data[1] + j) >= image_width + 2 * scale)
+		if (col < 0 || col >= image_width + 2 * scale)
 			continue;
 
 		//printf("Compute at  %d %d\n", n.m_Data[0] + i, n.m_Data[1] + j);
@@ -82,7 +84,7 @@ __device__ void addToHistoArray(struct CVector* dHalfDiscInfluencePoints, int to
 		}*/
 
 		//unsigned int* vHist = dHistograms[n.m_Data[0] + i] + (n.m_Data[1] + j) * 2 * arcno * 256;
-		unsigned int* vHist = getHistoPointer(data[0] + i, data[1] + j, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
+		unsigned int* vHist = getHistoPointer(row, col, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, scale, arcno);
 		//todo: error handling
 		if (vHist == nullptr)
 			continue;
