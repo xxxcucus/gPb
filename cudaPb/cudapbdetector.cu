@@ -43,7 +43,7 @@ __global__ void calculateGradients(int row_start, int row_count, double* dGradie
 }
 
 __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceImage,\
-	int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, \
+	int* dHalfDiscInfluencePointsIndices, int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints, \
 	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2,\
 	int image_width, int image_height, int scale, int arcno)
 {
@@ -59,18 +59,19 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];
 		//printf("Row %d Index %d Val %d \n", i, j, int(val));
 		//with the point (i,j) with value val, update all histograms which contain this data point
-		addToHistoArray(dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, image_height, scale, arcno, val, i, j);
+		addToHistoArray(dHalfDiscInfluencePointsIndices, dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, image_height, scale, arcno, val, i, j);
 	}
 }
 
-__device__ void addToHistoArray(int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints,\
+__device__ void addToHistoArray(int* dHalfDiscInfluencePointsIndices, int* dHalfDiscInfluencePoints, int totalHalfInfluencePoints,\
 	unsigned int** dHistograms, int bottomChunk1, int bottomChunk2, int topChunk1, int topChunk2, \
 	int image_width, int image_height, int scale, int arcno, int val, int i, int j)
 {
-	int data_size = 1;
-	for (int k = 0; k < totalHalfInfluencePoints; k += data_size + 1) {
-		data_size = dHalfDiscInfluencePoints[k];
-		int* data = dHalfDiscInfluencePoints + k + 1; 
+
+	for (int k = 0; k < totalHalfInfluencePoints - 1; ++k) {
+		int data_idx = dHalfDiscInfluencePointsIndices[k];
+		int data_size = dHalfDiscInfluencePointsIndices[k + 1] - data_idx;
+		int* data = dHalfDiscInfluencePoints + data_idx; 
 		int row = data[0] + i;
 		int col = data[1] + j;
 		if (row < 0 || row >= image_height + 2 * scale)
@@ -90,7 +91,7 @@ __device__ void addToHistoArray(int* dHalfDiscInfluencePoints, int totalHalfInfl
 		if (vHist == nullptr)
 			continue;
 		
-		for (unsigned int l = 2; l < dHalfDiscInfluencePoints[k]; ++l) {
+		for (unsigned int l = 2; l < data_size; ++l) {
 			int idx = data[l];
 			if (idx >= 2 * arcno || val < 0 || val >= 256)
 				continue;
@@ -265,6 +266,8 @@ CudaPbDetector::~CudaPbDetector()
 
 	free(m_hHalfDiscInfluencePoints);
 	cudaFree(m_dHalfDiscInfluencePoints);
+	free(m_hHalfDiscInfluencePointsIndices);
+	cudaFree(m_dHalfDiscInfluencePointsIndices);
 }
 
 bool CudaPbDetector::copyImageToGPU(unsigned char* image_data)
@@ -302,73 +305,55 @@ bool CudaPbDetector::copyImageToGPU(unsigned char* image_data)
 	return true;
 }
 
-/**
- * Copies m_Masks->getHalfDiscInfluencePoints()
- * to the GPU
- */
-/*bool CudaPbDetector::initializeInfluencePoints() {
-	m_Masks = new DiscInverseMasks(m_Scale);
-	std::vector<std::vector<int>> neighb = m_Masks->getHalfDiscInfluencePoints();
-
-	m_TotalHalfInfluencePoints = int(neighb.size());
-
-	m_hHalfDiscInfluencePoints = (CVector*)malloc(m_TotalHalfInfluencePoints * sizeof(CVector));
-	for (int i = 0; i < m_TotalHalfInfluencePoints; ++i) {
-		m_hHalfDiscInfluencePoints[i].m_Size = int(neighb[i].size());
-		m_LastCudaError = cudaMalloc(&m_hHalfDiscInfluencePoints[i].m_Data, neighb[i].size() * sizeof(int));
-		if (m_LastCudaError != cudaSuccess)
-			return false;
-		int* values = (int*)malloc(neighb[i].size() * sizeof(int));
-		
-		for (int j = 0; j < neighb[i].size(); ++j)
-			values[j] = neighb[i][j];
-		m_LastCudaError = cudaMemcpy(m_hHalfDiscInfluencePoints[i].m_Data, values, neighb[i].size() * sizeof(int), cudaMemcpyHostToDevice);
-		if (m_LastCudaError != cudaSuccess)
-			return false;
-		free(values);
-	}
-
-//TODO: release memory in case of failure
-
-	//preparing histograms
-	m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(CVector));
-	if (m_LastCudaError != cudaSuccess)
-		return false;
-
-	cudaMemcpy(m_dHalfDiscInfluencePoints, m_hHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(CVector), cudaMemcpyHostToDevice);
-	if (m_LastCudaError != cudaSuccess)
-		return false;
-
-	return true;	
-}*/
-
 bool CudaPbDetector::initializeInfluencePoints() {
 	m_Masks = new DiscInverseMasks(m_Scale);
 	std::vector<std::vector<int>> neighb = m_Masks->getHalfDiscInfluencePoints();
 
 	//save the vectors inside a single linear vector
+	std::vector<int> neighb_indices;
 	std::vector<int> linear_neighb;
+	int last_idx = 0;
 	for (auto nb : neighb) {
-		linear_neighb.push_back(int(nb.size()));
+		neighb_indices.push_back(last_idx);
+		last_idx += int(nb.size());
 		for (auto ne : nb)
 			linear_neighb.push_back(ne);
 	}
 
-	m_TotalHalfInfluencePoints = int(linear_neighb.size());
+	neighb_indices.push_back(last_idx);
+
+	int totalData = int(linear_neighb.size());
 	//printf("Total influence points %d\n", m_TotalHalfInfluencePoints);
 
-	m_hHalfDiscInfluencePoints = (int*)malloc(m_TotalHalfInfluencePoints * sizeof(int));
+	m_hHalfDiscInfluencePoints = (int*)malloc(totalData * sizeof(int));
 	for (unsigned int i = 0; i < linear_neighb.size(); ++i) {
 		//printf("[%d] = %d\n", i, linear_neighb[i]);
 		m_hHalfDiscInfluencePoints[i] = linear_neighb[i];
 	}
 
 	//preparing histograms
-	m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(int));
+	m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePoints, totalData * sizeof(int));
 	if (m_LastCudaError != cudaSuccess)
 		return false;
 
-	cudaMemcpy(m_dHalfDiscInfluencePoints, m_hHalfDiscInfluencePoints, m_TotalHalfInfluencePoints * sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(m_dHalfDiscInfluencePoints, m_hHalfDiscInfluencePoints, totalData * sizeof(int), cudaMemcpyHostToDevice);
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+
+	m_TotalHalfInfluencePoints = int(neighb_indices.size());
+
+	m_hHalfDiscInfluencePointsIndices = (int*)malloc(m_TotalHalfInfluencePoints * sizeof(int));
+	for (unsigned int i = 0; i < neighb_indices.size(); ++i) {
+		//printf("[%d] = %d\n", i, linear_neighb[i]);
+		m_hHalfDiscInfluencePointsIndices[i] = neighb_indices[i];
+	}
+
+	//preparing histograms
+	m_LastCudaError = cudaMalloc(&m_dHalfDiscInfluencePointsIndices, m_TotalHalfInfluencePoints * sizeof(int));
+	if (m_LastCudaError != cudaSuccess)
+		return false;
+
+	cudaMemcpy(m_dHalfDiscInfluencePointsIndices, m_hHalfDiscInfluencePointsIndices, m_TotalHalfInfluencePoints * sizeof(int), cudaMemcpyHostToDevice);
 	if (m_LastCudaError != cudaSuccess)
 		return false;
 
@@ -385,7 +370,7 @@ bool CudaPbDetector::executeChunk() {
 		int row_start = m_Step * i;
 		int row_count = std::min(m_Step, m_Height + 2 * m_Scale - row_start);
 		//printf("Row_start: %d Row_count %d Scale %d BottomChunk1 %d TopChunk1 %d BottomChunk2 %d TopChunk2 %d \n", row_start, row_count, m_Scale, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk2);
-		calcHisto<<<row_count, m_NoThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, \
+		calcHisto<<<row_count, m_NoThreads>>>(row_start, row_count, m_dSourceImage, m_dHalfDiscInfluencePointsIndices, m_dHalfDiscInfluencePoints, m_TotalHalfInfluencePoints, \
 			m_HistoAllocator->m_dHistograms, m_HistoAllocator->m_BottomChunk1, m_HistoAllocator->m_BottomChunk2, m_HistoAllocator->m_TopChunk1, m_HistoAllocator->m_TopChunk2, \
 			m_Width, m_Height, m_Scale, m_ArcNo);
 		cudaDeviceSynchronize();
