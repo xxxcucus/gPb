@@ -49,8 +49,9 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 {
 	int index = threadIdx.x;
 
+	//TODO: test if it can run with 100, on some older GPUs it will be too much
 	__shared__ int sh_halfDiscIndices[100];
-	if (totalHalfInfluencePoints < 100 && index < 100 )
+	if (totalHalfInfluencePoints < 100 && index < 100)
 		sh_halfDiscIndices[index] = dHalfDiscInfluencePointsIndices[index];
 	__syncthreads();
 
