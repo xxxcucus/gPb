@@ -48,6 +48,12 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 	int image_width, int image_height, int scale, int arcno)
 {
 	int index = threadIdx.x;
+
+	__shared__ int sh_halfDiscIndices[100];
+	if (index < 100)
+		sh_halfDiscIndices[index] = dHalfDiscInfluencePointsIndices[index];
+	__syncthreads();
+
 	int stride = blockDim.x;
 	int i = row_start + blockIdx.x;
 
@@ -59,7 +65,7 @@ __global__ void calcHisto(int row_start, int row_count, unsigned char* dSourceIm
 		unsigned char val = dSourceImage[i * (image_width + 2 * scale) + j];
 		//printf("Row %d Index %d Val %d \n", i, j, int(val));
 		//with the point (i,j) with value val, update all histograms which contain this data point
-		addToHistoArray(dHalfDiscInfluencePointsIndices, dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, image_height, scale, arcno, val, i, j);
+		addToHistoArray(sh_halfDiscIndices, dHalfDiscInfluencePoints, totalHalfInfluencePoints, dHistograms, bottomChunk1, bottomChunk2, topChunk1, topChunk2, image_width, image_height, scale, arcno, val, i, j);
 	}
 }
 
