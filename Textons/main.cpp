@@ -11,7 +11,7 @@
 
 int main(int argc, char* argv[])
 {
-    double sigma = 1.0;
+/*    double sigma = 1.0;
     for (int k = 0; k < 0; ++k) {
         for (int i = 0; i < 8; ++i) {
             printf("First derivative filter for %f degrees %f sigma\n", double(i) * 22.5, sigma);
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 
     Texton t3 = t1 + t2;
     t3 = t3 / 2.0;
-    printf("Texton1 : %s\n", qPrintable(t3.toString()));
+    printf("Texton1 : %s\n", qPrintable(t3.toString()));*/
 
 	QString textonDBPath;
 	if (argc > 1) {
