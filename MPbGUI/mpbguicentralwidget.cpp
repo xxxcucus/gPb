@@ -24,8 +24,9 @@ void MPbGuiCentralWidget::loadImage() {
 		return;
 
 	cv::Mat cvImg_col = cv::imread(fileNames[0].toUtf8().constData());
+	cv::cvtColor(cvImg_col, cvImg_col, cv::COLOR_BGR2RGB);
 
-	QImage qImg = QImage(reinterpret_cast<uchar*>(cvImg_col.data), cvImg_col.cols, cvImg_col.rows, static_cast<int>(cvImg_col.step), QImage::Format_Grayscale8);
+	QImage qImg = QImage(reinterpret_cast<uchar*>(cvImg_col.data), cvImg_col.cols, cvImg_col.rows, static_cast<int>(cvImg_col.step), QImage::Format_RGB888);
 	QPixmap pixImg = QPixmap::fromImage(qImg);
 	QPixmap scaledPixmap = pixImg.scaled(600, 400, Qt::KeepAspectRatio);
 	m_ImageLabel->setPixmap(scaledPixmap);

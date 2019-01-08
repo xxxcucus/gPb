@@ -12,5 +12,7 @@ MPbGuiMainWindow::MPbGuiMainWindow(QWidget* parent) : QMainWindow(parent) {
 	m_CentralWidget = new MPbGuiCentralWidget();
 	connect(loadAction, SIGNAL(triggered(bool)), m_CentralWidget, SLOT(loadImage()));
 	setCentralWidget(m_CentralWidget);
+
+	setFixedSize(600, 400);
 }
 
