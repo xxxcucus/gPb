@@ -28,4 +28,4 @@ target_link_libraries(testMPb
 	mPb)
 	
 qt5_use_modules(testMPb Core)
-install(TARGETS testMPb DESTINATION .)
+install(TARGETS testMPb DESTINATION bin)

@@ -2,7 +2,7 @@
 2. Rename cudaimage to cudampb - ok
 3. Create cpuMPb - ok
 4. Create test program for cudaMPb and gpuMPb - ok 
-5. Autodetect how many blocks are available and how many threads can be inside a block
+5. Autodetect how many blocks are available and how many threads can be inside a block. Take the image size into account.
 6. Implement cudaMPb in a grid - ok 
 7. Compare cudaMPb with cpuMPb. Let the algorithms run on the same images and compare the results.  ok
 8. Pass parameters by reference in kernel
@@ -12,3 +12,8 @@ Options: folders for texture training, Kernel parameters as options, alpha optim
 11. Masks in shared memory. Determine dynamically if there is enough place for them.
 12. Automatic kernel parameter computation.
 13. Dynamic parallelism for AddToHistoArray.
+14. TextonGenerator - save of textons in separate file
+15. MPb - save of intermediate images in dedicated folder
+16. MPbGUI - options: with textons, without textons, alphas, 
+17. MPbGUI - interface to mark relevant edges and discard not relevant ones.
+18. MPbGUI - show of edges.

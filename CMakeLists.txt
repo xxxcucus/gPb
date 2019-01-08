@@ -28,8 +28,8 @@ add_subdirectory(testMPb)
 add_subdirectory(mPb)
 add_subdirectory(MPbGUI)
 
-set(QT_ROOT_PATH ${Qt5_DIR}/../../../)
-set(OPENCV_ROOT_PATH ${OPENCV_DIR}/../)
+set(QT_ROOT_PATH ${Qt5Core_DIR}/../../../)
+set(OPENCV_ROOT_PATH ${OpenCV_DIR}/../)
 
 if (NOT UNIX)
 	install(FILES ${QT_ROOT_PATH}/bin/Qt5Core.dll DESTINATION bin)
