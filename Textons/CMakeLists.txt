@@ -11,13 +11,17 @@ include_directories(
 
 set(TEXTONS_SRCS 	
 	main.cpp
+	argumentlist.cpp
 )
 
+set(TEXTON_HEADR
+	argumentlist.h)
+
 add_executable(TextonGenerator 
-	${TEXTONS_SRCS})
+	${TEXTONS_SRCS} ${TEXTON_HEADR})
 target_link_libraries(TextonGenerator
 	libCommon
 	${OpenCV_LIBS})
 qt5_use_modules(TextonGenerator Core)
 
-install(TARGETS TextonGenerator DESTINATION .)
+install(TARGETS TextonGenerator DESTINATION bin)

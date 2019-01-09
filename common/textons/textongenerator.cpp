@@ -8,7 +8,8 @@
 #include <ctime>
 #include "textontools.h"
 
-TextonGenerator::TextonGenerator(FilterBank& filterBank) : m_FilterBank(filterBank) {
+TextonGenerator::TextonGenerator(FilterBank& filterBank, const QString& path) : 
+	m_FilterBank(filterBank), m_DataPath(path) {
     std::srand(std::time(0));
 	printf("Compute file paths \n");
 	computeFilePaths();
@@ -17,12 +18,16 @@ TextonGenerator::TextonGenerator(FilterBank& filterBank) : m_FilterBank(filterBa
 }
 
 void TextonGenerator::computeFilePaths() {
-    QFileInfo qfi_dataPath(m_DataPath);
+/*    QFileInfo qfi_dataPath(m_DataPath);
     if (!qfi_dataPath.exists() || !qfi_dataPath.isDir()) {
-        printf("File does not exist\n");
+        printf("File does not exist --%s--\n", m_DataPath.toUtf8().constData());
         return;
-    }
+    }*/
     QDir dir_dataPath(m_DataPath);
+	if (!dir_dataPath.exists()) {
+		printf("Directory does not exist --%s--\n", m_DataPath.toUtf8().constData());
+		return;
+	}
 	QStringList filters;
 	printf("Searching in path %s\n", qPrintable(dir_dataPath.canonicalPath()));
 	QFileInfoList qfi_list_dataPath = dir_dataPath.entryInfoList(filters);
@@ -51,6 +56,8 @@ void TextonGenerator::computeFilePaths() {
 }
 
 void TextonGenerator::initClusterCenters() {
+	if (m_SmallSetImagesPaths.empty())
+		return;
     int imagesNo = static_cast<int>(m_SmallSetImagesPaths.size());
     for (int i = 0; i < m_ClusterNo; ++i) {
         int imgId = generateRandom(imagesNo);
@@ -144,17 +151,20 @@ void TextonGenerator::runKMeansIteration() {
 }
 
 void TextonGenerator::execute() {
+	if (m_SmallSetImagesPaths.empty())
+		return;
 	printf("Execute \n");
-    writeClusterCentersToFile();
+    writeClusterCentersToFile(m_ReprTextonsPath);
     for (int i = 0; i < m_IterationsNo; ++i) {
 		printf("Iteration %d\n", i + 1);
 		runKMeansIteration();
-        writeClusterCentersToFile();
+        writeClusterCentersToFile(m_ReprTextonsPath);
     }
+	writeClusterCentersToFile(m_TargetPath);
 }
 
-void TextonGenerator::writeClusterCentersToFile() {
-    QFile file(m_ReprTextonsPath);
+void TextonGenerator::writeClusterCentersToFile(const QString& path) {
+    QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Append)) {
         qDebug()  << "File could not be opened";
         return;
@@ -168,6 +178,5 @@ void TextonGenerator::writeClusterCentersToFile() {
         stream << m_ClusterCenters[i].toString() << endl;
     }
     stream.flush();
-
     file.close();
 }

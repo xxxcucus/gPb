@@ -23,8 +23,8 @@ void TextonKernel::init() {
     }
     m_Kernel = m_Kernel / m_ScaleFactor;
 
-    printf("Scale factor %f\n", m_ScaleFactor);
-    printValues();
+    //printf("Scale factor %f\n", m_ScaleFactor);
+    //printValues();
 }
 
 void TextonKernel::printValues() {

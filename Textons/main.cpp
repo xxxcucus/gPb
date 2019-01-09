@@ -8,6 +8,7 @@
 #include "textongenerator.h"
 #include "texton.h"
 #include "filterbank.h"
+#include "argumentlist.h"
 
 int main(int argc, char* argv[])
 {
@@ -63,15 +64,27 @@ int main(int argc, char* argv[])
     t3 = t3 / 2.0;
     printf("Texton1 : %s\n", qPrintable(t3.toString()));*/
 
-	QString textonDBPath;
-	if (argc > 1) {
-		textonDBPath = QString(argv[1]);
+	ArgumentList al(argc, argv);
+
+	if (al.getSwitch("--help")) {
+		printf("TextonGenerator --help - shows this help\n");
+		printf("TextonGenerator --textonFile FileName --textureFolder FolderName \n");
+		printf("\t --textonFile defines the file in which the textons will be saved \n");
+		printf("\t --textureFolder defines the folder where the images for texture quantization will be saved\n");
+		return 0;
 	}
 
 	FilterBank filterBank;
-    TextonGenerator tg(filterBank);
-	if (argc > 1)
-		tg.setDataPath(textonDBPath);
+
+	QString textureFolderPath = al.getSwitchArg("--textureFolder", QString());
+
+	TextonGenerator tg(filterBank, textureFolderPath);
+
+	QString textonFilePath = al.getSwitchArg("--textonFile", QString());
+	if (!textonFilePath.isEmpty()) {
+		tg.setTargetPath(textonFilePath);
+	}
+		
     tg.execute();
 
     return 0;

@@ -34,11 +34,11 @@ void FilterBank::create() {
 	tk->init();
 	m_FilterBank.push_back(tk);
 
-	for (unsigned int i = 0; i < m_FilterBank.size(); ++i) {
+	/*for (unsigned int i = 0; i < m_FilterBank.size(); ++i) {
 		printf("Matrix %u\n", i);
 		m_FilterBank[i]->printValues();
 		printf("\n");
-	}
+	}*/
 }
 
 std::vector<cv::Mat> FilterBank::runOnGrayScaleImage(const cv::Mat &greyImg) {

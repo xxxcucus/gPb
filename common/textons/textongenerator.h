@@ -20,7 +20,7 @@
 class TextonGenerator
 {
 public:
-    TextonGenerator(FilterBank& filterBank);
+    TextonGenerator(FilterBank& filterBank, const QString& path);
     /**
      * @brief: runs runKMeansIteration m_IterationNo times and writes the results after each step to file
      */
@@ -28,6 +28,10 @@ public:
 
 	void setDataPath(const QString& path) {
 		m_DataPath = path;
+	}
+
+	void setTargetPath(const QString& path) {
+		m_TargetPath = path;
 	}
 
 private:
@@ -41,7 +45,7 @@ private:
      */
     void initClusterCenters();
 
-    void writeClusterCentersToFile();
+    void writeClusterCentersToFile(const QString& path);
 
     /**
      * @brief runKMeansOnImage - performs kmeans clustering and saves a vector of textons representing
@@ -57,10 +61,6 @@ private:
      */
     int generateRandom(int maxVal);
 
-
-
- 
-
     /**
      * @brief runKMeansIteration - reads all the images, and runs runKMeansOnImage, gathers the results for all images
      * and recalculates the cluster center positions
@@ -69,7 +69,8 @@ private:
 
 
 private:
-    QString m_DataPath = "textures/";
+    QString m_DataPath = "../textures/";
+	QString m_TargetPath = "textons.txt";
     QString m_ReprTextonsPath = "cluster_centers.txt";
 
 	FilterBank& m_FilterBank;
@@ -84,7 +85,6 @@ private:
     std::vector<Texton> m_ClusterCenters;
     //number of times kmeans runs
     int m_IterationsNo = 10;
-
 };
 
 #endif // TEXTONGENERATOR_H
