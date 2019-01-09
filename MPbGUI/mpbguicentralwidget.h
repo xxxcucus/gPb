@@ -1,11 +1,12 @@
 #ifndef _MPB_GUI_CENTRAL_WIDGET_
 #define _MPB_GUI_CENTRAL_WIDGET_
 
-#include <QWidget>
+#include <QTabWidget>
 #include <QLabel>
 #include "opencv2/opencv.hpp"
+#include "scrollareaimage.h"
 
-class MPbGuiCentralWidget : public QWidget {
+class MPbGuiCentralWidget : public QTabWidget {
 	Q_OBJECT
 
 public:
@@ -15,7 +16,9 @@ public slots:
 	void loadImage();
 
 private:
-	QLabel* m_ImageLabel;
+	ScrollAreaImage* m_ScrollAreaImage;
+	ScrollAreaImage* m_ScrollAreaEdges;
+	cv::Mat m_Image;
 };
 
 

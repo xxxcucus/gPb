@@ -2,11 +2,12 @@
 #include <QVBoxLayout>
 #include <QFileDialog>
 
-MPbGuiCentralWidget::MPbGuiCentralWidget(QWidget* parent) : QWidget(parent) {
-	QVBoxLayout* vlayout = new QVBoxLayout();
-	m_ImageLabel = new QLabel();
-	vlayout->addWidget(m_ImageLabel);
-	setLayout(vlayout);
+MPbGuiCentralWidget::MPbGuiCentralWidget(QWidget* parent) : QTabWidget(parent) {
+	m_ScrollAreaImage = new ScrollAreaImage();
+	m_ScrollAreaEdges = new ScrollAreaImage();
+
+	addTab(m_ScrollAreaImage, "Image");
+	addTab(m_ScrollAreaEdges, "Edges");
 }
 
 void MPbGuiCentralWidget::loadImage() {
@@ -25,11 +26,10 @@ void MPbGuiCentralWidget::loadImage() {
 
 	cv::Mat cvImg_col = cv::imread(fileNames[0].toUtf8().constData());
 	cv::cvtColor(cvImg_col, cvImg_col, cv::COLOR_BGR2RGB);
+	m_Image = cvImg_col.clone();
 
-	QImage qImg = QImage(reinterpret_cast<uchar*>(cvImg_col.data), cvImg_col.cols, cvImg_col.rows, static_cast<int>(cvImg_col.step), QImage::Format_RGB888);
-	QPixmap pixImg = QPixmap::fromImage(qImg);
-	QPixmap scaledPixmap = pixImg.scaled(600, 400, Qt::KeepAspectRatio);
-	m_ImageLabel->setPixmap(scaledPixmap);
+	m_ScrollAreaImage->setImage(m_Image);
+
 	update();
 }
 

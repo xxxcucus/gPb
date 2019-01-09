@@ -13,11 +13,13 @@ set(MPB_GUI_SRCS
 	main.cpp
 	mpbguimainwindow.cpp
 	mpbguicentralwidget.cpp
+	scrollareaimage.cpp
 )
 
 set(MPB_GUI_HEADR
 	mpbguimainwindow.h
 	mpbguicentralwidget.h
+	scrollareaimage.h
 )
 
 add_executable(MPbGUI 
