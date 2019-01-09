@@ -13,7 +13,7 @@
 #include "mPb.h"
 
 
-void calculateGradients(cv::Mat inputImg, std::string imgName, int scale);
+//void calculateGradients(cv::Mat inputImg, std::string imgName, int scale);
 
 int main(int argc, char* argv[])
 {
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 	* MPb detector
 	********************************************/
 
-	std::string sourcePath = "Sternchen2016.jpg";
+	std::string sourcePath = "../Sternchen2016.jpg";
 	cv::Mat img = cv::imread(sourcePath);
 	int nRows = img.rows / 3;
 	int nCols = img.cols / 3;
@@ -174,8 +174,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-
-void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
+/*void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
 	CudaPbDetector cudaImg(inputImg.data, inputImg.cols, inputImg.rows, scale);
 	if (!cudaImg.wasSuccessfullyCreated()) {
 		printf("Error in constructor %s. Exiting\n", cudaImg.getErrorString());
@@ -197,4 +196,4 @@ void calculateGradients(cv::Mat inputImg, std::string imgName, int scale) {
 	cv::imwrite(imgName + "grad_2" + std::to_string(scale) + ".png", cuda_grad2);
 	cv::Mat cuda_grad3(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(3));
 	cv::imwrite(imgName + "grad_3" + std::to_string(scale) + ".png", cuda_grad3);
-}
+}*/

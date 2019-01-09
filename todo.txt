@@ -14,7 +14,7 @@ Options: folders for texture training, Kernel parameters as options, alpha optim
 13. Dynamic parallelism for AddToHistoArray.
 14. TextonGenerator - save of textons in separate file, specify texture directory, specify path and name of the texton file,
 help, integrate ArgumentList in main - ok 
-15. MPb - save of intermediate images in dedicated folder
+15. MPb - save of intermediate images in dedicated folder - ok
 16. MPbGUI - options: with textons, without textons, alphas, 
 17. MPbGUI - interface to mark relevant edges and discard not relevant ones.
 18. MPbGUI - show of edges.

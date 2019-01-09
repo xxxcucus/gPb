@@ -29,4 +29,4 @@ target_link_libraries(MPbGUI
 	${OpenCV_LIBS})
 
 qt5_use_modules(MPbGUI Widgets)
-install(TARGETS MPbGUI DESTINATION .)
+install(TARGETS MPbGUI DESTINATION bin)

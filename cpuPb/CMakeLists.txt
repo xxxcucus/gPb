@@ -19,4 +19,3 @@ target_link_libraries(cpuPb
 	libCommon
 	${OpenCV_LIBS})
 	
-install (FILES ${CMAKE_ROOT_DIR}/cpuPb/Sternchen2016.jpg DESTINATION .)
