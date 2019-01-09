@@ -91,16 +91,16 @@ std::vector<cv::Mat> MultiscalePb::calculateGradientImage(const std::string& com
 
 	cv::Mat cuda_grad0(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(0));
 	retVal.push_back(cuda_grad0.clone());
-	cv::imwrite(compName + "_grad_0_" + std::to_string(scale) + ".png", cuda_grad0);
+	cv::imwrite(m_TmpPath + compName + "_grad_0_" + std::to_string(scale) + ".png", cuda_grad0);
 	cv::Mat cuda_grad1(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(1));
 	retVal.push_back(cuda_grad1.clone());
-	cv::imwrite(compName + "_grad_1_" + std::to_string(scale) + ".png", cuda_grad1);
+	cv::imwrite(m_TmpPath + compName + "_grad_1_" + std::to_string(scale) + ".png", cuda_grad1);
 	cv::Mat cuda_grad2(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(2));
 	retVal.push_back(cuda_grad2.clone());
-	cv::imwrite(compName + "_grad_2_" + std::to_string(scale) + ".png", cuda_grad2);
+	cv::imwrite(m_TmpPath + compName + "_grad_2_" + std::to_string(scale) + ".png", cuda_grad2);
 	cv::Mat cuda_grad3(inputImg.rows, inputImg.cols, CV_64FC1, cudaImg.getGradientImage(3));
 	retVal.push_back(cuda_grad3.clone());
-	cv::imwrite(compName + "_grad_3_" + std::to_string(scale) + ".png", cuda_grad3);
+	cv::imwrite(m_TmpPath + compName + "_grad_3_" + std::to_string(scale) + ".png", cuda_grad3);
 
 	return retVal;
 }

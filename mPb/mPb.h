@@ -58,6 +58,7 @@ private:
 	* Path to quantized textons.
 	*/
 	std::string m_TextonPath;
+	std::string m_TmpPath = "../tmp/";
 
 	std::map<std::string, cv::Mat> m_ComponentImages;
 
