@@ -13,7 +13,7 @@ MPbGuiCentralWidget::MPbGuiCentralWidget(QWidget* parent) : QTabWidget(parent) {
 void MPbGuiCentralWidget::loadImage() {
 	QFileDialog dialog(this);
 	dialog.setFileMode(QFileDialog::AnyFile);
-	dialog.setNameFilter(tr("Images (*.png *.xpm *.jpg)"));
+	dialog.setNameFilter(tr("Images (*.png *.xpm *.jpg *.ppm)"));
 	dialog.setViewMode(QFileDialog::Detail);
 	dialog.setDirectory(".");
 
