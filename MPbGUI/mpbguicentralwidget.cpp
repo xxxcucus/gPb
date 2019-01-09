@@ -1,6 +1,7 @@
 #include "mpbguicentralwidget.h"
 #include <QVBoxLayout>
 #include <QFileDialog>
+#include "mpb.h"
 
 MPbGuiCentralWidget::MPbGuiCentralWidget(QWidget* parent) : QTabWidget(parent) {
 	m_ScrollAreaImage = new ScrollAreaImage();
@@ -28,7 +29,26 @@ void MPbGuiCentralWidget::loadImage() {
 	cv::cvtColor(cvImg_col, cvImg_col, cv::COLOR_BGR2RGB);
 	m_Image = cvImg_col.clone();
 
-	m_ScrollAreaImage->setImage(m_Image);
+	m_ScrollAreaImage->setImage(m_Image, false);
+
+	std::map<std::string, std::vector<int>> mapScales;
+	std::vector<int> scales = { 3, 5, 7 };
+	mapScales["l"] = scales;
+	mapScales["a"] = scales;
+	mapScales["b"] = scales;
+	mapScales["t"] = scales;
+
+	MultiscalePb detector(m_Image, "textons.txt", mapScales);
+	auto grad_start = std::chrono::high_resolution_clock::now();
+	detector.computeGradients();
+	auto grad_stop = std::chrono::high_resolution_clock::now();
+	auto grad_duration = std::chrono::duration_cast<std::chrono::milliseconds>(grad_stop - grad_start);
+	printf("Multiscale gradients runtime(ms) %d\n", int(grad_duration.count()));
+	detector.computeEdges();
+	cv::Mat m_EdgesImage = detector.getEdges();
+	cv::imwrite("edges_gui.png", m_EdgesImage);
+
+	m_ScrollAreaEdges->setImage(m_EdgesImage, true);
 
 	update();
 }

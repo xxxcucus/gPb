@@ -19,6 +19,7 @@ private:
 	ScrollAreaImage* m_ScrollAreaImage;
 	ScrollAreaImage* m_ScrollAreaEdges;
 	cv::Mat m_Image;
+	cv::Mat m_EdgesImage;
 };
 
 

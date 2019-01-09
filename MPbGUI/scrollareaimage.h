@@ -9,7 +9,7 @@ class ScrollAreaImage : public QScrollArea {
 
 public:
 	ScrollAreaImage(QWidget* parent = nullptr);
-	void setImage(cv::Mat image);
+	void setImage(cv::Mat image, bool gray);
 
 private:
 	cv::Mat m_Image;
