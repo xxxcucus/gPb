@@ -1,7 +1,8 @@
 #include "mpbguicentralwidget.h"
 #include <QVBoxLayout>
 #include <QFileDialog>
-#include "mpb.h"
+#include <chrono>
+#include "mPb.h"
 
 MPbGuiCentralWidget::MPbGuiCentralWidget(QWidget* parent) : QTabWidget(parent) {
 	m_ScrollAreaImage = new ScrollAreaImage();

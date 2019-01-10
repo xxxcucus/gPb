@@ -152,7 +152,7 @@ void MultiscalePb::computeEdges() {
 	}
 	
 	cv::Mat nonMaxSup = nonMaximumSuppression(orientGradientImages, maxImage);
-	cv::normalize(nonMaxSup, m_GradImage, 0, 255, cv::NORM_MINMAX);
+	cv::normalize(nonMaxSup, m_GradImage, 0, 255, cv::NORM_MINMAX, CV_8UC1);
 }
 
 cv::Mat MultiscalePb::nonMaximumSuppression(const std::vector<cv::Mat> orientImgs, cv::Mat maxImage) {
