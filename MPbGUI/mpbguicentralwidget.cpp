@@ -7,9 +7,11 @@
 MPbGuiCentralWidget::MPbGuiCentralWidget(QWidget* parent) : QTabWidget(parent) {
 	m_ScrollAreaImage = new ScrollAreaImage();
 	m_ScrollAreaEdges = new ScrollAreaImage();
+	m_ScrollAreaMixed = new ScrollAreaImage();
 
 	addTab(m_ScrollAreaImage, "Image");
 	addTab(m_ScrollAreaEdges, "Edges");
+	addTab(m_ScrollAreaMixed, "Mixed");
 }
 
 void MPbGuiCentralWidget::loadImage() {
@@ -50,6 +52,13 @@ void MPbGuiCentralWidget::loadImage() {
 	cv::imwrite("edges_gui.png", m_EdgesImage);
 
 	m_ScrollAreaEdges->setImage(m_EdgesImage, true);
+
+	/*cv::Mat edgesImageRGB;
+	cv::cvtColor(m_EdgesImage, edgesImageRGB, cv::COLOR_GRAY2BGR);
+	cv::Mat mixedImage;
+	cv::add(m_Image, m_EdgesImage, mixedImage);
+
+	m_ScrollAreaMixed->setImage(mixedImage, false);*/
 
 	update();
 }

@@ -18,6 +18,7 @@ public slots:
 private:
 	ScrollAreaImage* m_ScrollAreaImage;
 	ScrollAreaImage* m_ScrollAreaEdges;
+	ScrollAreaImage* m_ScrollAreaMixed;
 	cv::Mat m_Image;
 	cv::Mat m_EdgesImage;
 };
