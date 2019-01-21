@@ -17,4 +17,4 @@ help, integrate ArgumentList in main - ok
 15. MPb - save of intermediate images in dedicated folder - ok
 16. MPbGUI - options: with textons, without textons, alphas, 
 17. MPbGUI - interface to mark relevant edges and discard not relevant ones.
-18. MPbGUI - show of edges.
+18. MPbGUI - show of edges. - ok 
