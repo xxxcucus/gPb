@@ -1,7 +1,7 @@
 \documentclass{beamer}
 \usepackage{amsmath}
 
-\title{GPU Implementation of gPb Edge Detection}
+\title{GPU Implementation of Pb Edge Detection}
 \author{Cristian Cucu \\ \texttt{cristian\_cucu@yahoo.com}}
 
 %\usetheme{lucid}
@@ -18,29 +18,15 @@
 	\frame {
 		\frametitle{Edge Detection - Introduction}
 		Edge detection is a process in which the regions where sharp color transitions in images occur are found.
+		Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
 	}
 	\frame{
-		\frametitle{Edge Detection - Important Methods (excluding Deep Learning)  \cite{xie} }
+		\frametitle{Edge Detection - Important Categories of Methods \cite{xie} }
 		\begin{itemize}
 			\item Pioneering Methods
-			\begin{itemize}
-				\item Sobel Detector
-				\item Zero Crossing
-				\item Canny Edge Detector
-			\end{itemize}
 			\item Information Theory and Hand Crafted Features
-			\begin{itemize}
-				\item Statistical Edges
-				\item Pb
-				\item gPb
-			\end{itemize}
 			\item Learning Based Methods
-			\begin{itemize}
-				\item BEL
-				\item Multiscale
-				\item Sketch Tokens
-				\item Structured Edges
-			\end{itemize}
+			\item Deep Learning Based Methods
 		\end{itemize}
 	}
 	\frame{
@@ -94,7 +80,7 @@
 	}
     \frame{
 		\frametitle {Information Theory and Hand Crafted Features}
-		\framesubtitle {Pb - Probability of Boundary}
+		\framesubtitle {Pb - Probability of Boundary - Edge Detector}
 		For each point of an image and each orientation an edge value is computed as follows:
 		\begin{itemize}
 			\item A disc of radius R centered at the point is superimposed on the image
@@ -129,9 +115,14 @@
 	\frame{
 	\frametitle {Information Theory and Hand Crafted Features}
 	\framesubtitle {Global Pb - Part 1}
-	A global component is added to the local component computed with multiscale Pb. This component is constructed as follows: 
+	To account for bigger context in the image a global component is added local component (mPb) in the gPb algorithm. This component is constructed as follows: 
 	\begin{itemize}
-		\item A square matrix W with dimension equal to the number of pixels in the image is defined as follows, when the distance between pixels i and j is smaller than a given radius, : \[ W_{ij} = exp(-\max\limits_{p \in \bar{ij}} \frac{mPb(p)}{\rho})\], $\bar{ij}$ is the segment connecting i and j, otherwise 0.
+		\item A square matrix W with dimension equal to the number of pixels in the image is defined as follows:
+		\begin{itemize}
+		 \item an influence radius r is chosen
+		 \item when the distance between pixels i and j is smaller or equal r, : \[ W_{ij} = exp(-\max\limits_{p \in \bar{ij}} \frac{mPb(p)}{\rho})\], $\bar{ij}$ is the segment connecting i and j, 
+		 \item when the distance between pixels i and j is equal than \[W_{ij} = 0\]
+		 \end{itemize}
 		\item A square matrix D as follows: \[ D_{ii} = \sum_{j} W_{ij}\]
 		
 	\end{itemize}	
@@ -147,7 +138,57 @@
 		
 		
 	\end{itemize}	
-} 
+	} 
+
+	\frame {
+	\frametitle{CUDA - Introduction}
+	\begin{itemize}
+		\item CUDA is a framework developed by NVIDIA for programming with the GPU. 
+		\item Supported graphic cards are the NVIDIA GPUs. 
+		\item The programming language is an extension of C.
+	\end{itemize}
+	}
+
+	\frame {
+	\frametitle{CUDA - Programming model}
+	\begin{itemize}
+		\item Two main entities: host (CPU) and device (GPU).The host organizes data transfer to the GPU and starts the parallel operations on them.
+		\item GPU can have thousands of processing units on which multiple threads are running.
+		\item Data transfer from CPU to GPU is slow and must be minimized as much as possible.
+	\end{itemize}
+	}
+	\frame {
+	\frametitle{Allocate Host and Device Memory }
+	\begin{itemize}
+		\item Two main entities: host (CPU) and device (GPU).The host organizes data transfer to the GPU and starts the parallel operations on them.
+		\item GPU can have thousands of processing units on which multiple threads are running.
+		\item Data transfer from CPU to GPU is slow and must be minimized as much as possible.
+		Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
+	\end{itemize}
+}
+
+	\frame {
+	\frametitle{Implement a Kernel}
+	\begin{itemize}
+		\item Two main entities: host (CPU) and device (GPU).The host organizes data transfer to the GPU and starts the parallel operations on them.
+		\item GPU can have thousands of processing units on which multiple threads are running.
+		\item Data transfer from CPU to GPU is slow and must be minimized as much as possible.
+		Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
+	\end{itemize}
+}
+
+
+	\frame {
+	\frametitle{Pb - single thread version}
+	Edge detection is a process in which the regions where sharp color transitions in images occur are found.
+	Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
+	}
+
+	\frame {
+	\frametitle{Pb - CUDA version}
+	Edge detection is a process in which the regions where sharp color transitions in images occur are found.
+	Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
+}
 
 	\begin{thebibliography}{9}		
 		\bibitem{liu} 
