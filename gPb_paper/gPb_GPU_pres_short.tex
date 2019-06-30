@@ -1,8 +1,29 @@
 \documentclass{beamer}
+%\setbeamersize{text margin left = 0cm}
 \usepackage{amsmath}
+\usepackage{listings}
+
+ \lstset{
+	%frame=tblr,
+	columns=fullflexible,
+	framesep=5pt,
+	basicstyle=\small,
+	showstringspaces=false,
+	keywordstyle=\itshape\color{blue},
+	%identifierstyle=\ttfamily,
+	stringstyle=\color{Maroon},
+	commentstyle=\color{black},
+	rulecolor=\color{Gray},
+	xleftmargin=0pt,
+	xrightmargin=0pt,
+	breaklines = true,
+	aboveskip=\bigskipamount,
+	belowskip=\bigskipamount,
+	%backgroundcolor=\color{LightGray!.50}
+}
 
 \title{GPU Implementation of Pb Edge Detection}
-\author{Cristian Cucu \\ \texttt{cristian\_cucu@yahoo.com}}
+%\author{Cristian Cucu \\ \texttt{cristian\_cucu@yahoo.com}}
 
 %\usetheme{lucid}
 \begin{document}
@@ -158,18 +179,103 @@
 	\end{itemize}
 	}
 	\frame {
+	\frametitle{CUDA - Simple Program Structure}
+	The structure of a CUDA program is as follows:
+	\begin{itemize}
+		\item Copy data from CPU to GPU memory
+		\item Invoke kernels to operate on the data stored in the GPU memory
+		\item Copy data back from GPU to CPU
+	\end{itemize}
+}
+
+	\begin{frame} [fragile] 
+	\frametitle{Sum of two vectors with CUDA - Part 1}
+	Initialize pointers to device memory, copy input data from host to device:
+	\begin{lstlisting}
+	void addWithCuda(int* c, const int* a, const int* b, int size) {
+	int* dev_a = nullptr;
+	int* dev_b = nullptr;
+	int* dev_c = nullptr;
+	
+	cudaMalloc((void**)&dev_c, size * sizeof(int));
+	cudaMalloc((void**)&dev_a, size * sizeof(int));
+	cudaMalloc((void**)&dev_b, size * sizeof(int));
+	
+	cudaMemcpy(dev_a, a, size * sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_b, b, size * sizeof(int), cudaMemcpyHostToDevice);
+	\end{lstlisting}
+	\end{frame}
+	
+	
+	\begin{frame} [fragile] 
+	\frametitle{Sum of two vectors with CUDA - Part 2}
+	Execute the parallel code, synchronize the threads, copy the results back to host,
+	free memory on the device:
+	\begin{lstlisting}
+	addKernel<<<2, (size + 1) / 2>>>(dev_c, dev_a, dev_b, size);
+	
+	cudaDeviceSynchronize();
+	
+	cudaMemcpy(c, dev_c, size * sizeof(int), cudaMemcpyDeviceToHost);
+	
+	cudaFree(dev_c);
+	cudaFree(dev_a);
+	cudaFree(dev_b);
+	}
+	\end{lstlisting}
+	\end{frame}
+	
+	\begin{frame} [fragile] 
+	\frametitle{Sum of two vectors with CUDA - Part 3}
+	Parallel kernel executed cooperatively by multiple threads:
+	\begin{lstlisting}
+	__global__ void addKernel(int* c, const int* a, const int* b, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+	c[i] = a[i] + b[i];
+	}
+	}
+	
+	\end{lstlisting}
+	\end{frame}
+
+
+	\frame {
 	\frametitle{Allocate Host and Device Memory }
 	\begin{itemize}
-		\item Two main entities: host (CPU) and device (GPU).The host organizes data transfer to the GPU and starts the parallel operations on them.
-		\item GPU can have thousands of processing units on which multiple threads are running.
-		\item Data transfer from CPU to GPU is slow and must be minimized as much as possible.
-		Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
+		\item GPU memory is managed with function calls similar to C functions: cudaMalloc, cudaMemcpy, cudaMemset, cudaFree.
+		\item It is illegal to access device memory in host code and host memory in device code. There exists a mode of memory access called the Unified Memory Model where code can access both device and host memory at the same time. (TODO??)
 	\end{itemize}
 }
 
 	\frame {
 	\frametitle{Implement a Kernel}
 	\begin{itemize}
+		\item When a kernel has been launched, control is returned immediately to the host, which can perform asynchronously other tasks.
+		\item cudaDeviceSynchronize 
+	\end{itemize}
+}
+
+	\frame {
+	\frametitle{Thread Organition in CUDA}
+	\begin{itemize}
+		\item Threads launched by the same kernel are organized in a 3D structure called grid. All threads in a grid share the same global memory space.
+		\item Each grid element can contained another 3D structure of threads called a block. Threads in the same block can cooperate with each other by using
+		\begin{itemize}
+			\item Block-local synchronization
+			\item Block-local shared memory
+		\end{itemize}
+		\item To distinguish them from each other threads use two identifiers:
+		\begin{itemize}
+			\item blockIdx (block index within a grid)
+			\item threadIdx (thread index within a block)
+		\end{itemize}
+	\end{itemize}
+}
+
+	\frame {
+	\frametitle{Host Memory and Device Memory}
+	\begin{itemize}
 		\item Two main entities: host (CPU) and device (GPU).The host organizes data transfer to the GPU and starts the parallel operations on them.
 		\item GPU can have thousands of processing units on which multiple threads are running.
 		\item Data transfer from CPU to GPU is slow and must be minimized as much as possible.
@@ -179,10 +285,36 @@
 
 
 	\frame {
-	\frametitle{Pb - single thread version}
-	Edge detection is a process in which the regions where sharp color transitions in images occur are found.
-	Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
+	\frametitle{For Loop with CUDA - 2D}
+	\begin{itemize}
+		\item Two main entities: host (CPU) and device (GPU).The host organizes data transfer to the GPU and starts the parallel operations on them.
+		\item GPU can have thousands of processing units on which multiple threads are running.
+		\item Data transfer from CPU to GPU is slow and must be minimized as much as possible.
+		Today we would like to show how a computation intensive, memory intensive edge detection algorithm can be implemented with CUDA.
+	\end{itemize}
+}
+
+	\begin{frame} [fragile] 
+	\frametitle{Pb - single thread version - 1}
+	\begin{lstlisting} [language=C++]
+	HistoVect histograms;
+	initializeHistoRange(histograms, 0, m_Scale + 1);	
+
+	for (int i = 0; i < m_SingleChannelImage.rows + 2 * m_Scale; ++i) {
+		for (int j = 0; j < m_SingleChannelImage.cols + 2 * m_Scale; ++j) {
+		int val = bufImg.at<unsigned char>(i, j);	
+		addToHistoMaps(histograms, val, i, j);
+		}
+		calculateGradients(histograms, i);
+		deleteFromHistoMaps(histograms, i);
 	}
+	\end{lstlisting} 
+	\end{frame}
+
+	\frame {
+	\frametitle{Pb - single threaded version - 2}
+	How are the histograms stored ? 
+}
 
 	\frame {
 	\frametitle{Pb - CUDA version}
