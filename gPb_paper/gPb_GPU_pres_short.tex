@@ -2,6 +2,8 @@
 %\setbeamersize{text margin left = 0cm}
 \usepackage{amsmath}
 \usepackage{listings}
+\usepackage{graphicx}
+\usepackage{color}
 
  \lstset{
 	%frame=tblr,
@@ -13,7 +15,7 @@
 	%identifierstyle=\ttfamily,
 	stringstyle=\color{Maroon},
 	commentstyle=\color{black},
-	rulecolor=\color{Gray},
+%	rulecolor=\color{Gray},
 	xleftmargin=0pt,
 	xrightmargin=0pt,
 	breaklines = true,
@@ -239,6 +241,9 @@
 	\end{lstlisting}
 	\end{frame}
 
+	\begin{frame}
+	\hspace*{1cm}\includegraphics[scale=0.8]{grid-of-thread-blocks.png}
+	\end{frame}
 
 	\frame {
 	\frametitle{Allocate Host and Device Memory }
@@ -248,13 +253,21 @@
 	\end{itemize}
 }
 
-	\frame {
+	\begin{frame}  
 	\frametitle{Implement a Kernel}
 	\begin{itemize}
 		\item When a kernel has been launched, control is returned immediately to the host, which can perform asynchronously other tasks.
-		\item cudaDeviceSynchronize 
+		\item After the kernel has been started one can call cudaDeviceSynchronize in order to wait for all threads to finish and synchronize with the host thread.
+		\item Kernel launch parameters are as follows: 	$<<< Dg, Db, Ns, S >>>$
+			%where:
+			\begin{itemize}
+				\item Dg - the dimension of the grid of blocks
+				\item Db - the dimension of the block
+				\item Ns - shared memory allocated for each block
+				\item S - the associated stream (optional)
+			\end{itemize}
 	\end{itemize}
-}
+	\end {frame}
 
 	\frame {
 	\frametitle{Thread Organition in CUDA}
