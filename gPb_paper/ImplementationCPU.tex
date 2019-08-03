@@ -1,0 +1,145 @@
+\section{Implementation with CPU}
+
+\subsection {Histograms}
+
+The histograms for one single channel input image are stored as follows:
+
+\begin{lstlisting}
+typedef std::map<int, int> Histo;
+typedef std::vector<std::vector<std::vector<Histo>>> HistoVect;
+\end{lstlisting}
+
+A histogram Histo is defined as a map from int to int. All the histograms for one image are stored in a multidimensional array HistoVect. The sizes of the 3 std::vector in the definition of HistoVect are:
+\begin{itemize}
+	\item the numbers of rows in the image
+	\item the number of columns in the image
+	\item the number of histograms per pixel - in this case 8
+\end{itemize}
+
+\subsection {Algorithm}
+
+\begin{lstlisting}
+void PbDetector::calculateGradients() {
+	HistoVect histograms;
+	initializeHistoRange(histograms, 0, m_Scale + 1);
+	
+	//padded image
+	cv::Mat bufImg(m_SingleChannelImage.rows + 2 * m_Scale, m_SingleChannelImage.cols + 2 * m_Scale, m_SingleChannelImage.type());
+	cv::copyMakeBorder(m_SingleChannelImage, bufImg, m_Scale, m_Scale, m_Scale, m_Scale, cv::BORDER_REPLICATE);
+	
+	for (int i = 0; i < m_SingleChannelImage.rows + 2 * m_Scale; ++i) {
+		//calculate histogram differences for line i - m_Radius * 2
+		for (int j = 0; j < m_SingleChannelImage.cols + 2 * m_Scale; ++j) {
+		int val = bufImg.at<unsigned char>(i, j);
+		//with the point (i,j) with value val, update all histograms which contain this data point
+		addToHistoMaps(histograms, val, i, j);
+		}
+		calculateGradients(histograms, i);
+		deleteFromHistoMaps(histograms, i);
+	}
+}
+\end{lstlisting}
+
+Because of the memory requirements for the histograms for an entire image, these are only partially kept in memory. They are created, computed when they are needed and deleted from memory when they are not needed anymore. The functions that operate on the histograms are as follows:
+
+\begin{itemize}
+	\item initializeHistoRange - creates histograms for the first rows of the image
+	\item addToHistoMaps - updates all the concerned histograms with the value at one pixel
+	\item deleteFromHistoMaps - deletes an entire row of histograms from the memory when it is not needed anymore	
+\end{itemize} 
+
+\subsubsection{InitializeHistoRange}
+
+\begin{lstlisting}
+void PbDetector::initializeHistoRange(HistoVect& vMaps, int start, int stop) {
+	std::vector<Histo> vHist;
+	for (int i = 0; i < 2 * m_ArcNo; ++i)
+		vHist.push_back(std::map<int, int>());
+	for (int i = start; i < stop; ++i) {
+		std::vector<std::vector<Histo>> vvHist;
+		for (int j = 0; j < m_SingleChannelImage.cols + 2 * m_Scale; ++j)
+			vvHist.push_back(vHist);
+		vMaps.push_back(vvHist);
+	}
+}
+\end{lstlisting}
+
+This only initializes stop - start rows of histograms for an image. The information about which row of the image is saved is not preserved in vMaps.
+
+\subsubsection{AddToHistoMaps}
+
+\begin{lstlisting}
+void PbDetector::addToHistoMaps(HistoVect& vMaps, int val, int i, int j) {
+	///origin relative to i,j
+	///in each of the 8 orientations in which half it belongs
+	/// std::pair<int,int>
+	std::vector<std::vector<int>>& neighb = m_Masks->getHalfDiscInfluencePoints();
+	for (auto n : neighb) {
+		if ((n[0] + i) < 0 || (n[0] + i) >= m_SingleChannelImage.rows + 2 * m_Scale)
+			continue;
+		if ((n[1] + j) < 0 || (n[1] + j) >= m_SingleChannelImage.cols + 2 * m_Scale)
+			continue;
+		
+		if (int(vMaps[n[0] + i].size()) != m_SingleChannelImage.cols + 2 * m_Scale) {
+			qDebug() << "exiting ..";
+			exit(1);
+		}
+	
+		std::vector<Histo>& vHist = vMaps[n[0] + i][n[1] + j];
+		for (unsigned int k = 2; k < n.size(); ++k) {
+			if (n[k] > 2 * m_ArcNo)
+				continue;
+			insertInHisto(vHist[n[k]], val);
+		}
+	}
+}
+\end{lstlisting}
+
+The function call getHalfDiscInfluencePoints() gives for a given position in the image a vector of vectors that contain
+\begin{itemize}
+	\item The relative coordinates of a neighbouring point to the given point
+	\item The indices of the histograms of the neighbouring point where the neightbouring point pixel data is present
+\end{itemize}
+
+So by iterating on getHalfDiscInfluencePoints() we add for each pixel point in the image to all the histograms of the neighbouring points.
+
+\subsubsection{CalculateGradients}
+
+\begin{lstlisting}
+void PbDetector::calculateGradients(const HistoVect& vMaps, int index) {
+	if (index < 2 * m_Scale)
+		return;
+	
+	for (int j = m_Scale; j < m_SingleChannelImage.cols + m_Scale; ++j) {
+		//for each of the 4 possible half disc divisions
+		//qDebug() << "index " << index << " " << j;
+		const std::vector<Histo>& vHist = vMaps[index - m_Scale][j];
+		if (int(vHist.size()) != 2 * m_ArcNo)
+			continue;
+		
+		for (int i = 0; i < m_ArcNo; ++i) {
+			const Histo& histo1 = vHist[i];
+			const Histo& histo2 = vHist[i + m_ArcNo];
+			double grad = chisquare(histo1, histo2);
+			m_GradientImages[i].at<double>(index - 2 * m_Scale, j - m_Scale) = grad;
+		}
+	}
+}
+\end{lstlisting}
+
+This function works with the row index-m\_Scale in the array of histograms. For every pixel on the corresponding row in the image it retrieves the array of 8 histograms, for opposing histograms computes their $\chi -square$ distance which is saved as the gradient in the gradient image corresponding to the orientation of the opposing histograms.
+
+\subsubsection{DeleteFromHistoMaps}
+
+\begin{lstlisting}
+void PbDetector::deleteFromHistoMaps(HistoVect& vMaps, int index) {
+	//add a new row in the vMaps
+	if (index + m_Scale + 1 < m_SingleChannelImage.rows + 2 * m_Scale) {
+		initializeHistoRange(vMaps, index + m_Scale + 1, index + m_Scale + 2);
+	}
+	//delete row which was already analyzed from vMaps
+	if (index >=  m_Scale + 1) {
+		vMaps[index - m_Scale - 1].clear();
+	}
+}
+\end{lstlisting}
